@@ -23,6 +23,10 @@
 #include "GameSystem/NGrid.h"
 #include <cmath>
 
+#if defined(__sun__)
+#include <ieeefp.h> // finite() on Solaris
+#endif
+
 // Forward class definitions
 class Corpse;
 class Creature;
