@@ -44,7 +44,7 @@ mangos_worldd_LDADD = \
 	../framework/libmangosframework.a \
 	../../dep/src/sockets/libmangossockets.a \
 	../../dep/src/g3dlite/libg3dlite.a \
-	../../dep/tbb/libtbbmalloc.so
+	-ltbbmalloc
 
 mangos_worldd_LDFLAGS = -L../../dep/src/sockets -L../../dep/src/g3dlite -L../bindings/universal/ -L../../dep/tbb -L$(libdir) $(MANGOS_LIBS) -export-dynamic
 

@@ -37,7 +37,7 @@ mangos_realmd_LDADD = \
 	../shared/libmangosshared.a \
 	../framework/libmangosframework.a \
 	../../dep/src/sockets/libmangossockets.a \
-	../../dep/tbb/libtbbmalloc.so
+	-ltbbmalloc
 
 mangos_realmd_LDFLAGS = -L../../dep/src/sockets -L../../dep/tbb -L$(libdir) $(MANGOS_LIBS)
 
