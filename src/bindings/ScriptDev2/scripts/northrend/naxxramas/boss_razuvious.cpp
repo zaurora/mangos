@@ -49,7 +49,7 @@ struct MANGOS_DLL_DECL boss_razuviousAI : public ScriptedAI
     boss_razuviousAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
-        m_bIsHeroicMode = pCreature->GetMap()->IsHeroic();
+        m_bIsHeroicMode = pCreature->GetMap()->IsRaidOrHeroicDungeon();
         Reset();
     }
 
@@ -100,6 +100,12 @@ struct MANGOS_DLL_DECL boss_razuviousAI : public ScriptedAI
 
         if (m_pInstance)
             m_pInstance->SetData(TYPE_RAZUVIOUS, IN_PROGRESS);
+    }
+
+    void JustReachedHome()
+    {
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_RAZUVIOUS, FAIL);
     }
 
     void UpdateAI(const uint32 uiDiff)

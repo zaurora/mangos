@@ -49,7 +49,7 @@ struct MANGOS_DLL_DECL boss_faerlinaAI : public ScriptedAI
     boss_faerlinaAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
-        m_bIsHeroicMode = pCreature->GetMap()->IsHeroic();
+        m_bIsHeroicMode = pCreature->GetMap()->IsRaidOrHeroicDungeon();
         m_bHasTaunted = false;
         Reset();
     }
@@ -105,6 +105,12 @@ struct MANGOS_DLL_DECL boss_faerlinaAI : public ScriptedAI
 
         if (m_pInstance)
             m_pInstance->SetData(TYPE_FAERLINA, DONE);
+    }
+
+    void JustReachedHome()
+    {
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_FAERLINA, FAIL);
     }
 
     void UpdateAI(const uint32 uiDiff)

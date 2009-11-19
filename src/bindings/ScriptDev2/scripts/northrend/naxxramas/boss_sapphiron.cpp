@@ -42,7 +42,7 @@ struct MANGOS_DLL_DECL boss_sapphironAI : public ScriptedAI
     boss_sapphironAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
-        m_bIsHeroicMode = pCreature->GetMap()->IsHeroic();
+        m_bIsHeroicMode = pCreature->GetMap()->IsRaidOrHeroicDungeon();
         Reset();
     }
 
@@ -88,6 +88,12 @@ struct MANGOS_DLL_DECL boss_sapphironAI : public ScriptedAI
     {
         if (m_pInstance)
             m_pInstance->SetData(TYPE_SAPPHIRON, DONE);
+    }
+
+    void JustReachedHome()
+    {
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_SAPPHIRON, FAIL);
     }
 
     void UpdateAI(const uint32 uiDiff)

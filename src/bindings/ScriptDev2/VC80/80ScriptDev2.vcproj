@@ -1455,6 +1455,10 @@
 						RelativePath="..\scripts\kalimdor\ruins_of_ahnqiraj\instance_ruins_of_ahnqiraj.cpp"
 						>
 					</File>
+					<File
+						RelativePath="..\scripts\kalimdor\ruins_of_ahnqiraj\instance_ruins_of_ahnqiraj.h"
+						>
+					</File>
 				</Filter>
 				<Filter
 					Name="temple_of_ahnqiraj"
@@ -1558,6 +1562,10 @@
 				</File>
 				<File
 					RelativePath="..\scripts\northrend\storm_peaks.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\northrend\zuldrak.cpp"
 					>
 				</File>
 				<Filter
@@ -2418,10 +2426,6 @@
 				</File>
 				<File
 					RelativePath="..\scripts\world\mob_generic_creature.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\world\npc_innkeeper.cpp"
 					>
 				</File>
 				<File

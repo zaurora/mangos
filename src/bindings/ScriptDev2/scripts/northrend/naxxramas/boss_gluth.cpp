@@ -78,7 +78,7 @@ struct MANGOS_DLL_DECL boss_gluthAI : public ScriptedAI
     boss_gluthAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
-        m_bIsHeroicMode = pCreature->GetMap()->IsHeroic();
+        m_bIsHeroicMode = pCreature->GetMap()->IsRaidOrHeroicDungeon();
         Reset();
     }
 
@@ -112,6 +112,12 @@ struct MANGOS_DLL_DECL boss_gluthAI : public ScriptedAI
     {
         if (m_pInstance)
             m_pInstance->SetData(TYPE_GLUTH, IN_PROGRESS);
+    }
+
+    void JustReachedHome()
+    {
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_GLUTH, FAIL);
     }
 
     void UpdateAI(const uint32 uiDiff)

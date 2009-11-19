@@ -77,7 +77,7 @@ struct MANGOS_DLL_DECL boss_nothAI : public ScriptedAI
     boss_nothAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
-        m_bIsHeroicMode = pCreature->GetMap()->IsHeroic();
+        m_bIsHeroicMode = pCreature->GetMap()->IsRaidOrHeroicDungeon();
         Reset();
     }
 
@@ -125,6 +125,12 @@ struct MANGOS_DLL_DECL boss_nothAI : public ScriptedAI
 
         if (m_pInstance)
             m_pInstance->SetData(TYPE_NOTH, DONE);
+    }
+
+    void JustReachedHome()
+    {
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_NOTH, FAIL);
     }
 
     void UpdateAI(const uint32 uiDiff)

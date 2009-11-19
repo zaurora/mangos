@@ -276,6 +276,7 @@ scripts/kalimdor/ruins_of_ahnqiraj/boss_moam.cpp \
 scripts/kalimdor/ruins_of_ahnqiraj/boss_ossirian.cpp \
 scripts/kalimdor/ruins_of_ahnqiraj/boss_rajaxx.cpp \
 scripts/kalimdor/ruins_of_ahnqiraj/instance_ruins_of_ahnqiraj.cpp \
+scripts/kalimdor/ruins_of_ahnqiraj/ruins_of_ahnqiraj.h \
 scripts/kalimdor/temple_of_ahnqiraj/boss_bug_trio.cpp \
 scripts/kalimdor/temple_of_ahnqiraj/boss_cthun.cpp \
 scripts/kalimdor/temple_of_ahnqiraj/boss_fankriss.cpp \
@@ -298,6 +299,7 @@ scripts/northrend/icecrown.cpp \
 scripts/northrend/sholazar_basin.cpp \
 scripts/northrend/storm_peaks.cpp \
 scripts/northrend/howling_fjord.cpp \
+scripts/northrend/zuldrak.cpp \
 scripts/northrend/azjol-nerub/ahnkahet/boss_jedoga.cpp \
 scripts/northrend/azjol-nerub/ahnkahet/boss_nadox.cpp \
 scripts/northrend/azjol-nerub/ahnkahet/boss_taldaram.cpp \
@@ -465,7 +467,6 @@ scripts/world/go_scripts.cpp \
 scripts/world/guards.cpp \
 scripts/world/item_scripts.cpp \
 scripts/world/mob_generic_creature.cpp \
-scripts/world/npc_innkeeper.cpp \
 scripts/world/npc_professions.cpp \
 scripts/world/npcs_special.cpp \
 system/ScriptLoader.cpp \

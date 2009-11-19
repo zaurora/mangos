@@ -49,7 +49,7 @@ struct MANGOS_DLL_DECL boss_loathebAI : public ScriptedAI
     boss_loathebAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
-        m_bIsHeroicMode = pCreature->GetMap()->IsHeroic();
+        m_bIsHeroicMode = pCreature->GetMap()->IsRaidOrHeroicDungeon();
         Reset();
     }
 
@@ -83,6 +83,12 @@ struct MANGOS_DLL_DECL boss_loathebAI : public ScriptedAI
     {
         if (m_pInstance)
             m_pInstance->SetData(TYPE_LOATHEB, DONE);
+    }
+
+    void JustReachedHome()
+    {
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_LOATHEB, FAIL);
     }
 
     void UpdateAI(const uint32 uiDiff)

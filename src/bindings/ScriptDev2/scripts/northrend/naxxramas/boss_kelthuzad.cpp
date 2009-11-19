@@ -159,7 +159,7 @@ struct MANGOS_DLL_DECL boss_kelthuzadAI : public ScriptedAI
         GuardiansOfIcecrown_Count = 0;
 
         m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
-        m_bIsHeroicMode = pCreature->GetMap()->IsHeroic();
+        m_bIsHeroicMode = pCreature->GetMap()->IsRaidOrHeroicDungeon();
         Reset();
     }
 
@@ -287,6 +287,12 @@ struct MANGOS_DLL_DECL boss_kelthuzadAI : public ScriptedAI
 
         if (m_pInstance)
             m_pInstance->SetData(TYPE_KELTHUZAD, IN_PROGRESS);
+    }
+
+    void JustReachedHome()
+    {
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_SAPPHIRON, FAIL);
     }
 
     void UpdateAI(const uint32 uiDiff)

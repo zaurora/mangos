@@ -16,8 +16,8 @@
 
 /* ScriptData
 SDName: Boss_Patchwerk
-SD%Complete: 80
-SDComment: TODO: confirm how hateful strike work
+SD%Complete: 100
+SDComment:
 SDCategory: Naxxramas
 EndScriptData */
 
@@ -48,7 +48,7 @@ struct MANGOS_DLL_DECL boss_patchwerkAI : public ScriptedAI
     boss_patchwerkAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
-        m_bIsHeroicMode = pCreature->GetMap()->IsHeroic();
+        m_bIsHeroicMode = pCreature->GetMap()->IsRaidOrHeroicDungeon();
         Reset();
     }
 
@@ -92,6 +92,12 @@ struct MANGOS_DLL_DECL boss_patchwerkAI : public ScriptedAI
 
         if (m_pInstance)
             m_pInstance->SetData(TYPE_PATCHWERK, IN_PROGRESS);
+    }
+
+    void JustReachedHome()
+    {
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_PATCHWERK, FAIL);
     }
 
     void DoHatefulStrike()
