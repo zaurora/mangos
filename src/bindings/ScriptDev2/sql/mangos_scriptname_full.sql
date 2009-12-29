@@ -99,6 +99,7 @@ UPDATE creature_template SET ScriptName='npc_prof_tailor' WHERE entry IN (22208,
 UPDATE creature_template SET ScriptName='npc_rogue_trainer' WHERE entry IN (918,4163,3328,4583,5165,5167,13283,16684);
 UPDATE creature_template SET ScriptName='npc_sayge' WHERE entry=14822;
 UPDATE creature_template SET ScriptName='npc_tabard_vendor' WHERE entry=28776;
+UPDATE creature_template SET ScriptName='npc_locksmith' WHERE entry IN (29665,29725,29728);
 
 /*  */
 /* ZONE */
@@ -513,6 +514,7 @@ UPDATE creature_template SET ScriptName='boss_colossus' WHERE entry=29307;
 UPDATE creature_template SET ScriptName='boss_galdarah' WHERE entry=29306;
 UPDATE creature_template SET ScriptName='boss_moorabi' WHERE entry=29305;
 UPDATE creature_template SET ScriptName='boss_sladran' WHERE entry=29304;
+UPDATE creature_template SET ScriptName='mob_sladran_summon_target' WHERE entry=29682;
 UPDATE gameobject_template SET ScriptName='go_gundrak_altar' WHERE entry IN (192518, 192519, 192520);
 UPDATE instance_template SET script='instance_gundrak' WHERE map=604;
 
@@ -779,6 +781,7 @@ UPDATE creature_template SET ScriptName='npc_henry_stern' WHERE entry=8696;
 
 /* RUINS OF AHN'QIRAJ */
 UPDATE instance_template SET script='instance_ruins_of_ahnqiraj' WHERE map=509;
+UPDATE creature_template SET ScriptName='mob_anubisath_guardian' WHERE entry=15355;
 
 /* SCARLET MONASTERY */
 UPDATE instance_template SET script='instance_scarlet_monastery' WHERE map=189;
@@ -899,7 +902,10 @@ UPDATE creature_template SET ScriptName='mob_freed_soul' WHERE entry=11136;
 UPDATE gameobject_template SET ScriptName='go_gauntlet_gate' WHERE entry=175357;
 
 /* SUNKEN TEMPLE */
-
+UPDATE instance_template SET script='instance_sunken_temple' WHERE map=109;
+DELETE FROM areatrigger_scripts WHERE entry=4016;
+INSERT INTO areatrigger_scripts VALUES (4016,'at_shade_of_eranikus');
+UPDATE creature_template SET ScriptName='npc_malfurion_stormrage' WHERE entry=15362;
 
 /* SUNWELL PLATEAU */
 UPDATE instance_template SET script='instance_sunwell_plateau' WHERE map=580;

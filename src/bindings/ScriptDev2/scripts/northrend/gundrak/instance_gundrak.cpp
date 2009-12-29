@@ -68,20 +68,20 @@ struct MANGOS_DLL_DECL instance_gundrak : public ScriptedInstance
     {
         memset(&m_auiEncounter, 0, sizeof(m_auiEncounter));
 
-        m_uiEckDoorGUID = 0;
+        m_uiEckDoorGUID           = 0;
         m_uiEckUnderwaterDoorGUID = 0;
-        m_uiGaldarahDoorGUID = 0;
-        m_uiExitDoorLeftGUID = 0;
-        m_uiExitDoorRightGUID = 0;
-        m_uiAltarOfSladranGUID = 0;
-        m_uiAltarOfMoorabiGUID = 0;
-        m_uiAltarOfColossusGUID = 0;
-        m_uiSnakeKeyGUID = 0;
-        m_uiTrollKeyGUID = 0;
-        m_uiMammothKeyGUID = 0;
-        m_uiBridgeGUID = 0;
+        m_uiGaldarahDoorGUID      = 0;
+        m_uiExitDoorLeftGUID      = 0;
+        m_uiExitDoorRightGUID     = 0;
+        m_uiAltarOfSladranGUID    = 0;
+        m_uiAltarOfMoorabiGUID    = 0;
+        m_uiAltarOfColossusGUID   = 0;
+        m_uiSnakeKeyGUID          = 0;
+        m_uiTrollKeyGUID          = 0;
+        m_uiMammothKeyGUID        = 0;
+        m_uiBridgeGUID            = 0;
 
-        m_uiSladranGUID = 0;
+        m_uiSladranGUID           = 0;
     }
 
     void OnCreatureCreate(Creature* pCreature)
@@ -98,7 +98,7 @@ struct MANGOS_DLL_DECL instance_gundrak : public ScriptedInstance
         {
             case GO_ECK_DOOR:
                 m_uiEckDoorGUID = pGo->GetGUID();
-                if ((m_auiEncounter[1] == DONE) && instance->IsRaidOrHeroicDungeon())
+                if ((m_auiEncounter[1] == DONE) && !instance->IsRegularDifficulty())
                     DoUseDoorOrButton(m_uiEckDoorGUID);
                 break;
             case GO_ECK_UNDERWATER_DOOR:
@@ -174,7 +174,7 @@ struct MANGOS_DLL_DECL instance_gundrak : public ScriptedInstance
                 m_auiEncounter[1] = uiData;
                 if (uiData == DONE)
                 {
-                    if (instance->IsRaidOrHeroicDungeon())
+                    if (!instance->IsRegularDifficulty())
                         DoUseDoorOrButton(m_uiEckDoorGUID);
                     if (GameObject* pGo = instance->GetGameObject(m_uiAltarOfMoorabiGUID))
                         pGo->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_UNK1);
