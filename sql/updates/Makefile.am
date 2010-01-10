@@ -1,4 +1,4 @@
-# Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+# Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -224,6 +224,17 @@ pkgdata_DATA = \
 	9068_02_mangos_spell_chain.sql \
 	9070_01_mangos_spell_proc_event.sql \
 	9074_01_mangos_command.sql \
+	9095_01_mangos_command.sql \
+	9121_01_mangos_npc_spellclick_spells.sql \
+	9125_01_mangos_npc_spellclick_spells.sql \
+	9133_01_mangos_spell_proc_event.sql \
+	9136_01_characters_account_data.sql \
+	9136_02_mangos_quest_poi.sql \
+	9136_03_characters_character_ticket.sql \
+	9136_04_mangos_spell_chain.sql \
+	9136_05_mangos_spell_bonus_data.sql \
+	9136_06_mangos_spell_proc_event.sql \
+	9136_07_characters_characters.sql \
 	README
 
 ## Additional files to include when running 'make dist'
@@ -428,4 +439,15 @@ EXTRA_DIST = \
 	9068_02_mangos_spell_chain.sql \
 	9070_01_mangos_spell_proc_event.sql \
 	9074_01_mangos_command.sql \
+	9095_01_mangos_command.sql \
+	9121_01_mangos_npc_spellclick_spells.sql \
+	9125_01_mangos_npc_spellclick_spells.sql \
+	9133_01_mangos_spell_proc_event.sql \
+	9136_01_characters_account_data.sql \
+	9136_02_mangos_quest_poi.sql \
+	9136_03_characters_character_ticket.sql \
+	9136_04_mangos_spell_chain.sql \
+	9136_05_mangos_spell_bonus_data.sql \
+	9136_06_mangos_spell_proc_event.sql \
+	9136_07_characters_characters.sql \
 	README
