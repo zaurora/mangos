@@ -1,4 +1,4 @@
-/* Copyright (C) 2006 - 2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
+/* Copyright (C) 2006 - 2010 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
 * This program is free software licensed under GPL version 2
 * Please see the included DOCS/LICENSE.TXT for more information */
 
@@ -291,6 +291,7 @@ extern void AddSC_instance_halls_of_lightning();
 extern void AddSC_boss_maiden_of_grief();                   //Ulduar, halls_of_stone
 extern void AddSC_boss_sjonnir();
 extern void AddSC_halls_of_stone();
+extern void AddSC_instance_halls_of_stone();
 extern void AddSC_instance_ulduar();                        //ulduar
 extern void AddSC_boss_ingvar();                            //utgarde_keep
 extern void AddSC_boss_keleseth();
@@ -679,6 +680,7 @@ void AddScripts()
     AddSC_boss_maiden_of_grief();                           //Ulduar, halls_of_stone
     AddSC_boss_sjonnir();
     AddSC_halls_of_stone();
+    AddSC_instance_halls_of_stone();
     AddSC_instance_ulduar();                                //ulduar
     AddSC_boss_ingvar();                                    //utgarde_keep
     AddSC_boss_keleseth();
