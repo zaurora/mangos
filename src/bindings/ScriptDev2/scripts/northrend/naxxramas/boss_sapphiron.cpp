@@ -41,12 +41,12 @@ struct MANGOS_DLL_DECL boss_sapphironAI : public ScriptedAI
 {
     boss_sapphironAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
-        m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
+        m_pInstance = (instance_naxxramas*)pCreature->GetInstanceData();
         m_bIsRegularMode = pCreature->GetMap()->IsRegularDifficulty();
         Reset();
     }
 
-    ScriptedInstance* m_pInstance;
+    instance_naxxramas* m_pInstance;
     bool m_bIsRegularMode;
 
     uint32 Icebolt_Count;
@@ -105,14 +105,14 @@ struct MANGOS_DLL_DECL boss_sapphironAI : public ScriptedAI
         {
             if (FrostAura_Timer < uiDiff)
             {
-                DoCast(m_creature->getVictim(),SPELL_FROST_AURA);
+                DoCastSpellIfCan(m_creature->getVictim(),SPELL_FROST_AURA);
                 FrostAura_Timer = 5000;
             }else FrostAura_Timer -= uiDiff;
 
             if (LifeDrain_Timer < uiDiff)
             {
                 if (Unit* target = SelectUnit(SELECT_TARGET_RANDOM,0))
-                    DoCast(target,SPELL_LIFE_DRAIN);
+                    DoCastSpellIfCan(target,SPELL_LIFE_DRAIN);
 
                 LifeDrain_Timer = 24000;
             }else LifeDrain_Timer -= uiDiff;
@@ -120,12 +120,12 @@ struct MANGOS_DLL_DECL boss_sapphironAI : public ScriptedAI
             if (Blizzard_Timer < uiDiff)
             {
                 if (Unit* target = SelectUnit(SELECT_TARGET_RANDOM,0))
-                    DoCast(target,SPELL_BLIZZARD);
+                    DoCastSpellIfCan(target,SPELL_BLIZZARD);
 
                 Blizzard_Timer = 20000;
             }else Blizzard_Timer -= uiDiff;
 
-            if (m_creature->GetHealth()*100 / m_creature->GetMaxHealth() > 10)
+            if (m_creature->GetHealthPercent() > 10.0f)
             {
                 if (Fly_Timer < uiDiff)
                 {
@@ -134,9 +134,9 @@ struct MANGOS_DLL_DECL boss_sapphironAI : public ScriptedAI
                     m_creature->HandleEmoteCommand(EMOTE_ONESHOT_LIFTOFF);
                     m_creature->GetMotionMaster()->Clear(false);
                     m_creature->GetMotionMaster()->MoveIdle();
-                    DoCast(m_creature,11010);
+                    DoCastSpellIfCan(m_creature,11010);
                     m_creature->SetHover(true);
-                    DoCast(m_creature,18430);
+                    DoCastSpellIfCan(m_creature,18430);
                     Icebolt_Timer = 4000;
                     Icebolt_Count = 0;
                     landoff = false;
@@ -149,7 +149,7 @@ struct MANGOS_DLL_DECL boss_sapphironAI : public ScriptedAI
             if (Icebolt_Timer < uiDiff && Icebolt_Count < 5)
             {
                 if (Unit* target = SelectUnit(SELECT_TARGET_RANDOM,0))
-                    DoCast(target,SPELL_ICEBOLT);
+                    DoCastSpellIfCan(target,SPELL_ICEBOLT);
 
                 ++Icebolt_Count;
                 Icebolt_Timer = 4000;
@@ -160,7 +160,7 @@ struct MANGOS_DLL_DECL boss_sapphironAI : public ScriptedAI
                 if (FrostBreath_Timer < uiDiff)
                 {
                     DoScriptText(EMOTE_BREATH, m_creature);
-                    DoCast(m_creature->getVictim(),SPELL_FROST_BREATH);
+                    DoCastSpellIfCan(m_creature->getVictim(),SPELL_FROST_BREATH);
                     land_Timer = 2000;
                     landoff = true;
                     FrostBreath_Timer = 6000;
@@ -181,12 +181,12 @@ struct MANGOS_DLL_DECL boss_sapphironAI : public ScriptedAI
             }
         }
 
-        if ((m_creature->GetHealth()*100) / m_creature->GetMaxHealth() <= 10)
+        if (m_creature->GetHealthPercent() <= 10.0f)
         {
             if (Beserk_Timer < uiDiff)
             {
                 DoScriptText(EMOTE_ENRAGE, m_creature);
-                DoCast(m_creature,SPELL_BESERK);
+                DoCastSpellIfCan(m_creature,SPELL_BESERK);
                 Beserk_Timer = 300000;
             }else Beserk_Timer -= uiDiff;
         }

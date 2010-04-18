@@ -41,17 +41,17 @@ enum
     SPELL_SUMMON_SPIDERLING = 29434,
 };
 
-#define LOC_X1    3546.796
-#define LOC_Y1    -3869.082
-#define LOC_Z1    296.450
+#define LOC_X1    3546.796f
+#define LOC_Y1    -3869.082f
+#define LOC_Z1    296.450f
 
-#define LOC_X2    3531.271
-#define LOC_Y2    -3847.424
-#define LOC_Z2    299.450
+#define LOC_X2    3531.271f
+#define LOC_Y2    -3847.424f
+#define LOC_Z2    299.450f
 
-#define LOC_X3    3497.067
-#define LOC_Y3    -3843.384
-#define LOC_Z3    302.384
+#define LOC_X3    3497.067f
+#define LOC_Y3    -3843.384f
+#define LOC_Z3    302.384f
 
 struct MANGOS_DLL_DECL mob_webwrapAI : public ScriptedAI
 {
@@ -93,12 +93,12 @@ struct MANGOS_DLL_DECL boss_maexxnaAI : public ScriptedAI
 {
     boss_maexxnaAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
-        m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
+        m_pInstance = (instance_naxxramas*)pCreature->GetInstanceData();
         m_bIsRegularMode = pCreature->GetMap()->IsRegularDifficulty();
         Reset();
     }
 
-    ScriptedInstance* m_pInstance;
+    instance_naxxramas* m_pInstance;
     bool m_bIsRegularMode;
 
     uint32 m_uiWebWrapTimer;
@@ -172,17 +172,17 @@ struct MANGOS_DLL_DECL boss_maexxnaAI : public ScriptedAI
             {
                 case 0:
                     DoTeleportPlayer((*iter), LOC_X1, LOC_Y1, LOC_Z1, (*iter)->GetOrientation());
-                    if (Creature* pWrap = m_creature->SummonCreature(16486, LOC_X1, LOC_Y1, LOC_Z1, 0, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 120000))
+                    if (Creature* pWrap = m_creature->SummonCreature(16486, LOC_X1, LOC_Y1, LOC_Z1, 0.0f, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 120000))
                         ((mob_webwrapAI*)pWrap->AI())->SetVictim((*iter));
                     break;
                 case 1:
                     DoTeleportPlayer((*iter), LOC_X2, LOC_Y2, LOC_Z2, (*iter)->GetOrientation());
-                    if (Creature* pWrap = m_creature->SummonCreature(16486, LOC_X2, LOC_Y2, LOC_Z2, 0, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 120000))
+                    if (Creature* pWrap = m_creature->SummonCreature(16486, LOC_X2, LOC_Y2, LOC_Z2, 0.0f, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 120000))
                         ((mob_webwrapAI*)pWrap->AI())->SetVictim((*iter));
                     break;
                 case 2:
                     DoTeleportPlayer((*iter), LOC_X3, LOC_Y3, LOC_Z3, (*iter)->GetOrientation());
-                    if (Creature* pWrap = m_creature->SummonCreature(16486, LOC_X3, LOC_Y3, LOC_Z3, 0, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 120000))
+                    if (Creature* pWrap = m_creature->SummonCreature(16486, LOC_X3, LOC_Y3, LOC_Z3, 0.0f, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 120000))
                         ((mob_webwrapAI*)pWrap->AI())->SetVictim((*iter));
                     break;
             }
@@ -206,7 +206,7 @@ struct MANGOS_DLL_DECL boss_maexxnaAI : public ScriptedAI
         // Web Spray
         if (m_uiWebSprayTimer < uiDiff)
         {
-            DoCast(m_creature->getVictim(), SPELL_WEBSPRAY);
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_WEBSPRAY);
             m_uiWebSprayTimer = 40000;
         }
         else
@@ -215,7 +215,7 @@ struct MANGOS_DLL_DECL boss_maexxnaAI : public ScriptedAI
         // Poison Shock
         if (m_uiPoisonShockTimer < uiDiff)
         {
-            DoCast(m_creature->getVictim(), SPELL_POISONSHOCK);
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_POISONSHOCK);
             m_uiPoisonShockTimer = 20000;
         }
         else
@@ -224,7 +224,7 @@ struct MANGOS_DLL_DECL boss_maexxnaAI : public ScriptedAI
         // Necrotic Poison
         if (m_uiNecroticPoisonTimer < uiDiff)
         {
-            DoCast(m_creature->getVictim(), SPELL_NECROTICPOISON);
+            DoCastSpellIfCan(m_creature->getVictim(), SPELL_NECROTICPOISON);
             m_uiNecroticPoisonTimer = 30000;
         }
         else
@@ -233,16 +233,16 @@ struct MANGOS_DLL_DECL boss_maexxnaAI : public ScriptedAI
         // Summon Spiderling
         if (m_uiSummonSpiderlingTimer < uiDiff)
         {
-            DoCast(m_creature, SPELL_SUMMON_SPIDERLING);
+            DoCastSpellIfCan(m_creature, SPELL_SUMMON_SPIDERLING);
             m_uiSummonSpiderlingTimer = 40000;
         }
         else
             m_uiSummonSpiderlingTimer -= uiDiff;
 
         //Enrage if not already enraged and below 30%
-        if (!m_bEnraged && (m_creature->GetHealth()*100 / m_creature->GetMaxHealth()) < 30)
+        if (!m_bEnraged && m_creature->GetHealthPercent() < 30.0f)
         {
-            DoCast(m_creature, SPELL_FRENZY);
+            DoCastSpellIfCan(m_creature, SPELL_FRENZY);
             m_bEnraged = true;
         }
 

@@ -10,5 +10,8 @@
 
 #
 # Scripting projects
+# This excludes all 3rd party script libraries
 #
-ScriptDev2
+*/
+!universal/
+!ScriptDev2/

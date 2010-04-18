@@ -25,7 +25,7 @@
 #include "Log.h"
 #include "World.h"
 #include "ObjectMgr.h"
-#include "ObjectDefines.h"
+#include "ObjectGuid.h"
 #include "Player.h"
 #include "Guild.h"
 #include "UpdateMask.h"
@@ -38,6 +38,14 @@
 #include "Util.h"
 #include "ArenaTeam.h"
 #include "Language.h"
+
+// config option SkipCinematics supported values
+enum CinematicsSkipMode
+{
+    CINEMATICS_SKIP_NONE      = 0,
+    CINEMATICS_SKIP_SAME_RACE = 1,
+    CINEMATICS_SKIP_ALL       = 2,
+};
 
 class LoginQueryHolder : public SqlQueryHolder
 {
@@ -60,22 +68,25 @@ bool LoginQueryHolder::Initialize()
 
     // NOTE: all fields in `characters` must be read to prevent lost character data at next save in case wrong DB structure.
     // !!! NOTE: including unused `zone`,`online`
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADFROM,            "SELECT guid, account, data, name, race, class, gender, level, xp, money, playerBytes, playerBytes2, playerFlags, position_x, position_y, position_z, map, orientation, taximask, cinematic, totaltime, leveltime, rest_bonus, logout_time, is_logout_resting, resettalents_cost, resettalents_time, trans_x, trans_y, trans_z, trans_o, transguid, extra_flags, stable_slots, at_login, zone, online, death_expire_time, taxi_path, dungeon_difficulty, arena_pending_points FROM characters WHERE guid = '%u'", GUID_LOPART(m_guid));
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADGROUP,           "SELECT leaderGuid FROM group_member WHERE memberGuid ='%u'", GUID_LOPART(m_guid));
+    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADFROM,            "SELECT guid, account, name, race, class, gender, level, xp, money, playerBytes, playerBytes2, playerFlags,"
+        "position_x, position_y, position_z, map, orientation, taximask, cinematic, totaltime, leveltime, rest_bonus, logout_time, is_logout_resting, resettalents_cost,"
+        "resettalents_time, trans_x, trans_y, trans_z, trans_o, transguid, extra_flags, stable_slots, at_login, zone, online, death_expire_time, taxi_path, dungeon_difficulty,"
+        "arenaPoints, totalHonorPoints, todayHonorPoints, yesterdayHonorPoints, totalKills, todayKills, yesterdayKills, chosenTitle, knownCurrencies, watchedFaction, drunk,"
+        "health, power1, power2, power3, power4, power5, power6, power7, specCount, activeSpec, exploredZones, equipmentCache, ammoId, knownTitles, actionBars FROM characters WHERE guid = '%u'", GUID_LOPART(m_guid));
+    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADGROUP,           "SELECT groupId FROM group_member WHERE memberGuid ='%u'", GUID_LOPART(m_guid));
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADBOUNDINSTANCES,  "SELECT id, permanent, map, difficulty, resettime FROM character_instance LEFT JOIN instance ON instance = id WHERE guid = '%u'", GUID_LOPART(m_guid));
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADAURAS,           "SELECT caster_guid,spell,effect_index,stackcount,amount,maxduration,remaintime,remaincharges FROM character_aura WHERE guid = '%u'", GUID_LOPART(m_guid));
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADSPELLS,          "SELECT spell,active,disabled FROM character_spell WHERE guid = '%u'", GUID_LOPART(m_guid));
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADQUESTSTATUS,     "SELECT quest,status,rewarded,explored,timer,mobcount1,mobcount2,mobcount3,mobcount4,itemcount1,itemcount2,itemcount3,itemcount4 FROM character_queststatus WHERE guid = '%u'", GUID_LOPART(m_guid));
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADDAILYQUESTSTATUS,"SELECT quest,time FROM character_queststatus_daily WHERE guid = '%u'", GUID_LOPART(m_guid));
+    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADDAILYQUESTSTATUS,"SELECT quest FROM character_queststatus_daily WHERE guid = '%u'", GUID_LOPART(m_guid));
+    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADWEKLYQUESTSTATUS,"SELECT quest FROM character_queststatus_weekly WHERE guid = '%u'", GUID_LOPART(m_guid));
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADREPUTATION,      "SELECT faction,standing,flags FROM character_reputation WHERE guid = '%u'", GUID_LOPART(m_guid));
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADINVENTORY,       "SELECT data,bag,slot,item,item_template FROM character_inventory JOIN item_instance ON character_inventory.item = item_instance.guid WHERE character_inventory.guid = '%u' ORDER BY bag,slot", GUID_LOPART(m_guid));
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADACTIONS,         "SELECT button,action,type FROM character_action WHERE guid = '%u' ORDER BY button", GUID_LOPART(m_guid));
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADMAILCOUNT,       "SELECT COUNT(id) FROM mail WHERE receiver = '%u' AND (checked & 1)=0 AND deliver_time <= '" UI64FMTD "'", GUID_LOPART(m_guid), (uint64)time(NULL));
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADMAILDATE,        "SELECT MIN(deliver_time) FROM mail WHERE receiver = '%u' AND (checked & 1)=0", GUID_LOPART(m_guid));
+    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADINVENTORY,       "SELECT data,text,bag,slot,item,item_template FROM character_inventory JOIN item_instance ON character_inventory.item = item_instance.guid WHERE character_inventory.guid = '%u' ORDER BY bag,slot", GUID_LOPART(m_guid));
+    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADACTIONS,         "SELECT spec,button,action,type FROM character_action WHERE guid = '%u' ORDER BY button", GUID_LOPART(m_guid));
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADSOCIALLIST,      "SELECT friend,flags,note FROM character_social WHERE guid = '%u' LIMIT 255", GUID_LOPART(m_guid));
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADHOMEBIND,        "SELECT map,zone,position_x,position_y,position_z FROM character_homebind WHERE guid = '%u'", GUID_LOPART(m_guid));
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADSPELLCOOLDOWNS,  "SELECT spell,item,time FROM character_spell_cooldown WHERE guid = '%u'", GUID_LOPART(m_guid));
-    if(sWorld.getConfig(CONFIG_DECLINED_NAMES_USED))
+    if(sWorld.getConfig(CONFIG_BOOL_DECLINED_NAMES_USED))
         res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADDECLINEDNAMES,   "SELECT genitive, dative, accusative, instrumental, prepositional FROM character_declinedname WHERE guid = '%u'", GUID_LOPART(m_guid));
     // in other case still be dummy query
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADGUILD,           "SELECT guildid,rank FROM guild_member WHERE guid = '%u'", GUID_LOPART(m_guid));
@@ -85,7 +96,11 @@ bool LoginQueryHolder::Initialize()
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADEQUIPMENTSETS,   "SELECT setguid, setindex, name, iconname, item0, item1, item2, item3, item4, item5, item6, item7, item8, item9, item10, item11, item12, item13, item14, item15, item16, item17, item18 FROM character_equipmentsets WHERE guid = '%u' ORDER BY setindex", GUID_LOPART(m_guid));
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADBGDATA,          "SELECT instance_id, team, join_x, join_y, join_z, join_o, join_map, taxi_start, taxi_end, mount_spell FROM character_battleground_data WHERE guid = '%u'", GUID_LOPART(m_guid));
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADACCOUNTDATA,     "SELECT type, time, data FROM character_account_data WHERE guid='%u'", GUID_LOPART(m_guid));
+    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADTALENTS,         "SELECT talent_id, current_rank, spec FROM character_talent WHERE guid = '%u'", GUID_LOPART(m_guid));
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADSKILLS,          "SELECT skill, value, max FROM character_skills WHERE guid = '%u'", GUID_LOPART(m_guid));
+    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADGLYPHS,          "SELECT spec, slot, glyph FROM character_glyphs WHERE guid='%u'", GUID_LOPART(m_guid));
+    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADMAILS,           "SELECT id,messageType,sender,receiver,subject,body,has_items,expire_time,deliver_time,money,cod,checked,stationery,mailTemplateId FROM mail WHERE receiver = '%u' ORDER BY id DESC", GUID_LOPART(m_guid));
+    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADMAILEDITEMS,     "SELECT data, text, mail_id, item_guid, item_template FROM mail_items JOIN item_instance ON item_guid = guid WHERE receiver = '%u'", GUID_LOPART(m_guid));
 
     return res;
 }
@@ -132,7 +147,7 @@ void WorldSession::HandleCharEnum(QueryResult * result)
         do
         {
             uint32 guidlow = (*result)[0].GetUInt32();
-            sLog.outDetail("Loading char guid %u from account %u.", guidlow, GetAccountId());
+            sLog.outDetail("Build enum data for char guid %u from account %u.", guidlow, GetAccountId());
             if(Player::BuildEnumData(result, &data))
                 ++num;
         }
@@ -150,14 +165,14 @@ void WorldSession::HandleCharEnumOpcode( WorldPacket & /*recv_data*/ )
 {
     /// get all the data necessary for loading all characters (along with their pets) on the account
     CharacterDatabase.AsyncPQuery(&chrHandler, &CharacterHandler::HandleCharEnumCallback, GetAccountId(),
-         !sWorld.getConfig(CONFIG_DECLINED_NAMES_USED) ?
+         !sWorld.getConfig(CONFIG_BOOL_DECLINED_NAMES_USED) ?
     //   ------- Query Without Declined Names --------
     //           0               1                2                3                 4                  5                       6                        7
         "SELECT characters.guid, characters.name, characters.race, characters.class, characters.gender, characters.playerBytes, characters.playerBytes2, characters.level, "
     //   8                9               10                     11                     12                     13                    14
         "characters.zone, characters.map, characters.position_x, characters.position_y, characters.position_z, guild_member.guildid, characters.playerFlags, "
     //  15                    16                   17                     18                   19
-        "characters.at_login, character_pet.entry, character_pet.modelid, character_pet.level, characters.data "
+        "characters.at_login, character_pet.entry, character_pet.modelid, character_pet.level, characters.equipmentCache "
         "FROM characters LEFT JOIN character_pet ON characters.guid=character_pet.owner AND character_pet.slot='%u' "
         "LEFT JOIN guild_member ON characters.guid = guild_member.guid "
         "WHERE characters.account = '%u' ORDER BY characters.guid"
@@ -167,8 +182,8 @@ void WorldSession::HandleCharEnumOpcode( WorldPacket & /*recv_data*/ )
         "SELECT characters.guid, characters.name, characters.race, characters.class, characters.gender, characters.playerBytes, characters.playerBytes2, characters.level, "
     //   8                9               10                     11                     12                     13                    14
         "characters.zone, characters.map, characters.position_x, characters.position_y, characters.position_z, guild_member.guildid, characters.playerFlags, "
-    //  15                    16                   17                     18                   19               20
-        "characters.at_login, character_pet.entry, character_pet.modelid, character_pet.level, characters.data, character_declinedname.genitive "
+    //  15                    16                   17                     18                   19                         20
+        "characters.at_login, character_pet.entry, character_pet.modelid, character_pet.level, characters.equipmentCache, character_declinedname.genitive "
         "FROM characters LEFT JOIN character_pet ON characters.guid = character_pet.owner AND character_pet.slot='%u' "
         "LEFT JOIN character_declinedname ON characters.guid = character_declinedname.guid "
         "LEFT JOIN guild_member ON characters.guid = guild_member.guid "
@@ -190,7 +205,7 @@ void WorldSession::HandleCharCreateOpcode( WorldPacket & recv_data )
 
     if(GetSecurity() == SEC_PLAYER)
     {
-        if(uint32 mask = sWorld.getConfig(CONFIG_CHARACTERS_CREATING_DISABLED))
+        if(uint32 mask = sWorld.getConfig(CONFIG_UINT32_CHARACTERS_CREATING_DISABLED))
         {
             bool disabled = false;
 
@@ -278,7 +293,7 @@ void WorldSession::HandleCharCreateOpcode( WorldPacket & recv_data )
         uint32 acctcharcount = fields[0].GetUInt32();
         delete resultacct;
 
-        if (acctcharcount >= sWorld.getConfig(CONFIG_CHARACTERS_PER_ACCOUNT))
+        if (acctcharcount >= sWorld.getConfig(CONFIG_UINT32_CHARACTERS_PER_ACCOUNT))
         {
             data << (uint8)CHAR_CREATE_ACCOUNT_LIMIT;
             SendPacket( &data );
@@ -294,7 +309,7 @@ void WorldSession::HandleCharCreateOpcode( WorldPacket & recv_data )
         charcount = fields[0].GetUInt8();
         delete result;
 
-        if (charcount >= sWorld.getConfig(CONFIG_CHARACTERS_PER_REALM))
+        if (charcount >= sWorld.getConfig(CONFIG_UINT32_CHARACTERS_PER_REALM))
         {
             data << (uint8)CHAR_CREATE_SERVER_LIMIT;
             SendPacket( &data );
@@ -303,7 +318,7 @@ void WorldSession::HandleCharCreateOpcode( WorldPacket & recv_data )
     }
 
     // speedup check for heroic class disabled case
-    uint32 heroic_free_slots = sWorld.getConfig(CONFIG_HEROIC_CHARACTERS_PER_REALM);
+    uint32 heroic_free_slots = sWorld.getConfig(CONFIG_UINT32_HEROIC_CHARACTERS_PER_REALM);
     if(heroic_free_slots == 0 && GetSecurity() == SEC_PLAYER && class_ == CLASS_DEATH_KNIGHT)
     {
         data << (uint8)CHAR_CREATE_UNIQUE_CLASS_LIMIT;
@@ -312,26 +327,26 @@ void WorldSession::HandleCharCreateOpcode( WorldPacket & recv_data )
     }
 
     // speedup check for heroic class disabled case
-    uint32 req_level_for_heroic = sWorld.getConfig(CONFIG_MIN_LEVEL_FOR_HEROIC_CHARACTER_CREATING);
-    if(GetSecurity() == SEC_PLAYER && class_ == CLASS_DEATH_KNIGHT && req_level_for_heroic > sWorld.getConfig(CONFIG_MAX_PLAYER_LEVEL))
+    uint32 req_level_for_heroic = sWorld.getConfig(CONFIG_UINT32_MIN_LEVEL_FOR_HEROIC_CHARACTER_CREATING);
+    if(GetSecurity() == SEC_PLAYER && class_ == CLASS_DEATH_KNIGHT && req_level_for_heroic > sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL))
     {
         data << (uint8)CHAR_CREATE_LEVEL_REQUIREMENT;
         SendPacket( &data );
         return;
     }
 
-    bool AllowTwoSideAccounts = sWorld.getConfig(CONFIG_ALLOW_TWO_SIDE_ACCOUNTS) || GetSecurity() > SEC_PLAYER;
-    uint32 skipCinematics = sWorld.getConfig(CONFIG_SKIP_CINEMATICS);
+    bool AllowTwoSideAccounts = sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_ACCOUNTS) || GetSecurity() > SEC_PLAYER;
+    CinematicsSkipMode skipCinematics = CinematicsSkipMode(sWorld.getConfig(CONFIG_UINT32_SKIP_CINEMATICS));
 
     bool have_same_race = false;
 
     // if 0 then allowed creating without any characters
     bool have_req_level_for_heroic = (req_level_for_heroic==0);
 
-    if(!AllowTwoSideAccounts || skipCinematics == 1 || class_ == CLASS_DEATH_KNIGHT)
+    if(!AllowTwoSideAccounts || skipCinematics == CINEMATICS_SKIP_SAME_RACE || class_ == CLASS_DEATH_KNIGHT)
     {
         QueryResult *result2 = CharacterDatabase.PQuery("SELECT level,race,class FROM characters WHERE account = '%u' %s",
-            GetAccountId(), (skipCinematics == 1 || class_ == CLASS_DEATH_KNIGHT) ? "" : "LIMIT 1");
+            GetAccountId(), (skipCinematics == CINEMATICS_SKIP_SAME_RACE || class_ == CLASS_DEATH_KNIGHT) ? "" : "LIMIT 1");
         if(result2)
         {
             uint32 team_= Player::TeamForRace(race_);
@@ -351,6 +366,7 @@ void WorldSession::HandleCharCreateOpcode( WorldPacket & recv_data )
                     {
                         data << (uint8)CHAR_CREATE_UNIQUE_CLASS_LIMIT;
                         SendPacket( &data );
+                        delete result2;
                         return;
                     }
                 }
@@ -382,7 +398,7 @@ void WorldSession::HandleCharCreateOpcode( WorldPacket & recv_data )
 
             // search same race for cinematic or same class if need
             // TODO: check if cinematic already shown? (already logged in?; cinematic field)
-            while ((skipCinematics == 1 && !have_same_race) || class_ == CLASS_DEATH_KNIGHT)
+            while ((skipCinematics == CINEMATICS_SKIP_SAME_RACE && !have_same_race) || class_ == CLASS_DEATH_KNIGHT)
             {
                 if(!result2->NextRow())
                     break;
@@ -405,6 +421,7 @@ void WorldSession::HandleCharCreateOpcode( WorldPacket & recv_data )
                         {
                             data << (uint8)CHAR_CREATE_UNIQUE_CLASS_LIMIT;
                             SendPacket( &data );
+                            delete result2;
                             return;
                         }
                     }
@@ -445,8 +462,10 @@ void WorldSession::HandleCharCreateOpcode( WorldPacket & recv_data )
         return;
     }
 
-    if ((have_same_race && skipCinematics == 1) || skipCinematics == 2)
+    if ((have_same_race && skipCinematics == CINEMATICS_SKIP_SAME_RACE) || skipCinematics == CINEMATICS_SKIP_ALL)
         pNewChar->setCinematic(1);                          // not show intro
+
+    pNewChar->SetAtLoginFlag(AT_LOGIN_FIRST);               // First login
 
     // Player created, save it now
     pNewChar->SaveToDB();
@@ -642,7 +661,7 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
         Guild* guild = sObjectMgr.GetGuildById(pCurrChar->GetGuildId());
         if(guild)
         {
-            data.Initialize(SMSG_GUILD_EVENT, (2+guild->GetMOTD().size()+1));
+            data.Initialize(SMSG_GUILD_EVENT, (1+1+guild->GetMOTD().size()+1));
             data << uint8(GE_MOTD);
             data << uint8(1);
             data << guild->GetMOTD();
@@ -651,13 +670,7 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
 
             guild->DisplayGuildBankTabsInfo(this);
 
-            data.Initialize(SMSG_GUILD_EVENT, (5+10));      // we guess size
-            data << uint8(GE_SIGNED_ON);
-            data << uint8(1);
-            data << pCurrChar->GetName();
-            data << pCurrChar->GetGUID();
-            guild->BroadcastPacket(&data);
-            DEBUG_LOG( "WORLD: Sent guild-signed-on (SMSG_GUILD_EVENT)" );
+            guild->BroadcastEvent(GE_SIGNED_ON, pCurrChar->GetGUID(), 1, pCurrChar->GetName(), "", "");
         }
         else
         {
@@ -724,8 +737,8 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
     {
         // not blizz like, we must correctly save and load player instead...
         if(pCurrChar->getRace() == RACE_NIGHTELF)
-            pCurrChar->CastSpell(pCurrChar, 20584, true, 0);// auras SPELL_AURA_INCREASE_SPEED(+speed in wisp form), SPELL_AURA_INCREASE_SWIM_SPEED(+swim speed in wisp form), SPELL_AURA_TRANSFORM (to wisp form)
-        pCurrChar->CastSpell(pCurrChar, 8326, true, 0);     // auras SPELL_AURA_GHOST, SPELL_AURA_INCREASE_SPEED(why?), SPELL_AURA_INCREASE_SWIM_SPEED(why?)
+            pCurrChar->CastSpell(pCurrChar, 20584, true);   // auras SPELL_AURA_INCREASE_SPEED(+speed in wisp form), SPELL_AURA_INCREASE_SWIM_SPEED(+swim speed in wisp form), SPELL_AURA_TRANSFORM (to wisp form)
+        pCurrChar->CastSpell(pCurrChar, 8326, true);        // auras SPELL_AURA_GHOST, SPELL_AURA_INCREASE_SPEED(why?), SPELL_AURA_INCREASE_SWIM_SPEED(why?)
 
         pCurrChar->SetMovement(MOVE_WATER_WALK);
     }
@@ -741,7 +754,7 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
 
     // Set FFA PvP for non GM in non-rest mode
     if(sWorld.IsFFAPvPRealm() && !pCurrChar->isGameMaster() && !pCurrChar->HasFlag(PLAYER_FLAGS,PLAYER_FLAGS_RESTING) )
-        pCurrChar->SetByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP);
+        pCurrChar->SetFFAPvP(true);
 
     if(pCurrChar->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_CONTESTED_PVP))
         pCurrChar->SetContestedPvP();
@@ -755,16 +768,19 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
 
     if(pCurrChar->HasAtLoginFlag(AT_LOGIN_RESET_TALENTS))
     {
-        pCurrChar->resetTalents(true);
+        pCurrChar->resetTalents(true,true);
         pCurrChar->SendTalentsInfoData(false);              // original talents send already in to SendInitialPacketsBeforeAddToMap, resend reset state
-        SendNotification(LANG_RESET_TALENTS);
+        SendNotification(LANG_RESET_TALENTS);               // we can use SMSG_TALENTS_INVOLUNTARILY_RESET here
     }
+
+    if (pCurrChar->HasAtLoginFlag(AT_LOGIN_FIRST))
+        pCurrChar->RemoveAtLoginFlag(AT_LOGIN_FIRST);
 
     // show time before shutdown if shutdown planned.
     if(sWorld.IsShutdowning())
         sWorld.ShutdownMsg(true,pCurrChar);
 
-    if(sWorld.getConfig(CONFIG_ALL_TAXI_PATHS))
+    if(sWorld.getConfig(CONFIG_BOOL_ALL_TAXI_PATHS))
         pCurrChar->SetTaxiCheater(true);
 
     if(pCurrChar->isGameMaster())
@@ -862,9 +878,9 @@ void WorldSession::HandleTutorialReset( WorldPacket & /*recv_data*/ )
 void WorldSession::HandleSetWatchedFactionOpcode(WorldPacket & recv_data)
 {
     DEBUG_LOG("WORLD: Received CMSG_SET_WATCHED_FACTION");
-    uint32 fact;
-    recv_data >> fact;
-    GetPlayer()->SetUInt32Value(PLAYER_FIELD_WATCHED_FACTION_INDEX, fact);
+    int32 repId;
+    recv_data >> repId;
+    GetPlayer()->SetInt32Value(PLAYER_FIELD_WATCHED_FACTION_INDEX, repId);
 }
 
 void WorldSession::HandleSetFactionInactiveOpcode(WorldPacket & recv_data)
@@ -1117,14 +1133,11 @@ void WorldSession::HandleRemoveGlyph( WorldPacket & recv_data )
         return;
     }
 
-    if(uint32 glyph = _player->GetGlyph(slot))
+    if(_player->GetGlyph(slot))
     {
-        if(GlyphPropertiesEntry const *gp = sGlyphPropertiesStore.LookupEntry(glyph))
-        {
-            _player->RemoveAurasDueToSpell(gp->SpellId);
-            _player->SetGlyph(slot, 0);
-            _player->SendTalentsInfoData(false);
-        }
+        _player->ApplyGlyph(slot, false);
+        _player->SetGlyph(slot, 0);
+        _player->SendTalentsInfoData(false);
     }
 }
 
@@ -1224,43 +1237,41 @@ void WorldSession::HandleEquipmentSetSave(WorldPacket &recv_data)
 {
     sLog.outDebug("CMSG_EQUIPMENT_SET_SAVE");
 
-    uint64 setGuid;
-    if(!recv_data.readPackGUID(setGuid))
-        return;
-
+    ObjectGuid setGuid;
     uint32 index;
+    std::string name;
+    std::string iconName;
+
+    recv_data >> setGuid.ReadAsPacked();
     recv_data >> index;
+    recv_data >> name;
+    recv_data >> iconName;
+
     if(index >= MAX_EQUIPMENT_SET_INDEX)                    // client set slots amount
         return;
 
-    std::string name;
-    recv_data >> name;
-
-    std::string iconName;
-    recv_data >> iconName;
-
     EquipmentSet eqSet;
 
-    eqSet.Guid      = setGuid;
+    eqSet.Guid      = setGuid.GetRawValue();
     eqSet.Name      = name;
     eqSet.IconName  = iconName;
     eqSet.state     = EQUIPMENT_SET_NEW;
 
     for(uint32 i = 0; i < EQUIPMENT_SLOT_END; ++i)
     {
-        uint64 itemGuid;
-        if(!recv_data.readPackGUID(itemGuid))
-            return;
+        ObjectGuid itemGuid;
+
+        recv_data >> itemGuid.ReadAsPacked();
 
         Item *item = _player->GetItemByPos(INVENTORY_SLOT_BAG_0, i);
 
-        if(!item && itemGuid)                               // cheating check 1
+        if(!item && !itemGuid.IsEmpty())                    // cheating check 1
             return;
 
-        if(item && item->GetGUID() != itemGuid)             // cheating check 2
+        if(item && item->GetObjectGuid() != itemGuid)       // cheating check 2
             return;
 
-        eqSet.Items[i] = GUID_LOPART(itemGuid);
+        eqSet.Items[i] = itemGuid.GetCounter();
     }
 
     _player->SetEquipmentSet(index, eqSet);
@@ -1270,11 +1281,11 @@ void WorldSession::HandleEquipmentSetDelete(WorldPacket &recv_data)
 {
     sLog.outDebug("CMSG_EQUIPMENT_SET_DELETE");
 
-    uint64 setGuid;
-    if(!recv_data.readPackGUID(setGuid))
-        return;
+    ObjectGuid setGuid;
 
-    _player->DeleteEquipmentSet(setGuid);
+    recv_data >> setGuid.ReadAsPacked();
+
+    _player->DeleteEquipmentSet(setGuid.GetRawValue());
 }
 
 void WorldSession::HandleEquipmentSetUse(WorldPacket &recv_data)
@@ -1284,14 +1295,13 @@ void WorldSession::HandleEquipmentSetUse(WorldPacket &recv_data)
 
     for(uint32 i = 0; i < EQUIPMENT_SLOT_END; ++i)
     {
-        uint64 itemGuid;
-        if(!recv_data.readPackGUID(itemGuid))
-            return;
-
+        ObjectGuid itemGuid;
         uint8 srcbag, srcslot;
+
+        recv_data >> itemGuid.ReadAsPacked();
         recv_data >> srcbag >> srcslot;
 
-        sLog.outDebug("Item " I64FMT ": srcbag %u, srcslot %u", itemGuid, srcbag, srcslot);
+        sLog.outDebug("Item (%s): srcbag %u, srcslot %u", itemGuid.GetString().c_str(), srcbag, srcslot);
 
         Item *item = _player->GetItemByGuid(itemGuid);
 
