@@ -31,10 +31,9 @@
 #include "ItemPrototype.h"
 #include "NPCHandler.h"
 #include "Database/DatabaseEnv.h"
-#include "Mail.h"
 #include "Map.h"
 #include "ObjectAccessor.h"
-#include "ObjectDefines.h"
+#include "ObjectGuid.h"
 #include "Policies/Singleton.h"
 #include "Database/SQLStorage.h"
 
@@ -260,16 +259,17 @@ struct QuestPOIPoint
 
 struct QuestPOI
 {
-    int32 ObjectiveIndex;
+    uint32 PoiId;
+    int32  ObjectiveIndex;
     uint32 MapId;
-    uint32 Unk1;
-    uint32 Unk2;
+    uint32 MapAreaId;
+    uint32 FloorId;
     uint32 Unk3;
     uint32 Unk4;
     std::vector<QuestPOIPoint> points;
 
-    QuestPOI() : ObjectiveIndex(0), MapId(0), Unk1(0), Unk2(0), Unk3(0), Unk4(0) {}
-    QuestPOI(int32 objIndex, uint32 mapId, uint32 unk1, uint32 unk2, uint32 unk3, uint32 unk4) : ObjectiveIndex(objIndex), MapId(mapId), Unk1(unk1), Unk2(unk2), Unk3(unk3), Unk4(unk4) {}
+    QuestPOI() : PoiId(0), ObjectiveIndex(0), MapId(0), MapAreaId(0), FloorId(0), Unk3(0), Unk4(0) {}
+    QuestPOI(uint32 poiId, int32 objIndex, uint32 mapId, uint32 mapAreaId, uint32 floorId, uint32 unk3, uint32 unk4) : PoiId(poiId), ObjectiveIndex(objIndex), MapId(mapId), MapAreaId(mapAreaId), FloorId(floorId), Unk3(unk3), Unk4(unk4) {}
 };
 
 typedef std::vector<QuestPOI> QuestPOIVector;
@@ -313,9 +313,11 @@ enum ConditionType
     CONDITION_AREA_FLAG             = 13,                   // area_flag    area_flag_not
     CONDITION_RACE_CLASS            = 14,                   // race_mask    class_mask
     CONDITION_LEVEL                 = 15,                   // player_level 0, 1 or 2 (0: equal to, 1: equal or higher than, 2: equal or less than)
+    CONDITION_NOITEM                = 16,                   // item_id      count
+    CONDITION_SPELL                 = 17,                   // spell_id     0, 1 (0: has spell, 1: hasn't spell)
 };
 
-#define MAX_CONDITION                 16                    // maximum value in ConditionType enum
+#define MAX_CONDITION                 18                    // maximum value in ConditionType enum
 
 struct PlayerCondition
 {
@@ -371,6 +373,24 @@ MANGOS_DLL_SPEC LanguageDesc const* GetLanguageDescByID(uint32 lang);
 
 class PlayerDumpReader;
 
+template<typename T>
+class IdGenerator
+{
+    public:                                                 // constructors
+        explicit IdGenerator(char const* _name) : m_name(_name), m_nextGuid(1) {}
+
+    public:                                                 // modifiers
+        void Set(T val) { m_nextGuid = val; }
+        T Generate();
+
+    public:                                                 // accessors
+        T GetNextAfterMaxUsed() const { return m_nextGuid; }
+
+    private:                                                // fields
+        char const* m_name;
+        T m_nextGuid;
+};
+
 class ObjectMgr
 {
     friend class PlayerDumpReader;
@@ -381,9 +401,9 @@ class ObjectMgr
 
         typedef UNORDERED_MAP<uint32, Item*> ItemMap;
 
-        typedef std::set< Group * > GroupSet;
+        typedef UNORDERED_MAP<uint32, Group*> GroupMap;
 
-        typedef UNORDERED_MAP<uint32, Guild *> GuildMap;
+        typedef UNORDERED_MAP<uint32, Guild*> GuildMap;
 
         typedef UNORDERED_MAP<uint32, ArenaTeam*> ArenaTeamMap;
 
@@ -401,16 +421,17 @@ class ObjectMgr
         typedef std::vector<std::string> ScriptNameMap;
 
         Player* GetPlayer(const char* name) const { return ObjectAccessor::FindPlayerByName(name);}
-        Player* GetPlayer(uint64 guid) const { return ObjectAccessor::FindPlayer(guid); }
+        Player* GetPlayer(ObjectGuid guid) const { return ObjectAccessor::FindPlayer(guid); }
 
         static GameObjectInfo const *GetGameObjectInfo(uint32 id) { return sGOStorage.LookupEntry<GameObjectInfo>(id); }
 
         void LoadGameobjectInfo();
         void AddGameobjectInfo(GameObjectInfo *goinfo);
 
-        Group * GetGroupByLeader(const uint64 &guid) const;
-        void AddGroup(Group* group) { mGroupSet.insert( group ); }
-        void RemoveGroup(Group* group) { mGroupSet.erase( group ); }
+        void PackGroupIds();
+        Group* GetGroupById(uint32 id) const;
+        void AddGroup(Group* group);
+        void RemoveGroup(Group* group);
 
         Guild* GetGuildByLeader(uint64 const&guid) const;
         Guild* GetGuildById(uint32 GuildId) const;
@@ -608,7 +629,6 @@ class ObjectMgr
         void LoadTavernAreaTriggers();
         void LoadGameObjectForQuests();
 
-        void LoadItemTexts();
         void LoadPageTexts();
 
         void LoadPlayerInfo();
@@ -637,8 +657,9 @@ class ObjectMgr
         void LoadTrainerSpell();
 
         std::string GeneratePetName(uint32 entry);
-        uint32 GetBaseXP(uint32 level);
-        uint32 GetXPForLevel(uint32 level);
+        uint32 GetBaseXP(uint32 level) const;
+        uint32 GetXPForLevel(uint32 level) const;
+        uint32 GetXPForPetLevel(uint32 level) const { return GetXPForLevel(level)/20; }
 
         int32 GetFishingBaseSkillLevel(uint32 entry) const
         {
@@ -650,24 +671,14 @@ class ObjectMgr
 
         void SetHighestGuids();
         uint32 GenerateLowGuid(HighGuid guidhigh);
-        uint32 GenerateArenaTeamId();
-        uint32 GenerateAuctionID();
-        uint64 GenerateEquipmentSetGuid();
-        uint32 GenerateGuildId();
-        uint32 GenerateItemTextID();
-        uint32 GenerateMailID();
-        uint32 GeneratePetNumber();
-
-        uint32 CreateItemText(std::string text);
-        void AddItemText(uint32 itemTextId, std::string text) { mItemTexts[itemTextId] = text; }
-        std::string GetItemText( uint32 id )
-        {
-            ItemTextMap::const_iterator itr = mItemTexts.find( id );
-            if ( itr != mItemTexts.end() )
-                return itr->second;
-            else
-                return "There is no info for this item";
-        }
+        uint32 GenerateArenaTeamId() { return m_ArenaTeamIds.Generate(); }
+        uint32 GenerateAuctionID() { return m_AuctionIds.Generate(); }
+        uint64 GenerateEquipmentSetGuid() { return m_EquipmentSetIds.Generate(); }
+        uint32 GenerateGuildId() { return m_GuildIds.Generate(); }
+        uint32 GenerateGroupId() { return m_GroupIds.Generate(); }
+        //uint32 GenerateItemTextID() { return m_ItemGuids.Generate(); }
+        uint32 GenerateMailID() { return m_MailIds.Generate(); }
+        uint32 GeneratePetNumber() { return m_PetNumbers.Generate(); }
 
         typedef std::multimap<int32, uint32> ExclusiveQuestGroups;
         ExclusiveQuestGroups mExclusiveQuestGroups;
@@ -885,34 +896,31 @@ class ObjectMgr
     protected:
 
         // first free id for selected id type
-        uint32 m_arenaTeamId;
-        uint32 m_auctionid;
-        uint64 m_equipmentSetGuid;
-        uint32 m_guildId;
-        uint32 m_ItemTextId;
-        uint32 m_mailid;
-        uint32 m_hiPetNumber;
+        IdGenerator<uint32> m_ArenaTeamIds;
+        IdGenerator<uint32> m_AuctionIds;
+        IdGenerator<uint64> m_EquipmentSetIds;
+        IdGenerator<uint32> m_GuildIds;
+        IdGenerator<uint32> m_MailIds;
+        IdGenerator<uint32> m_PetNumbers;
+        IdGenerator<uint32> m_GroupIds;
 
-        // first free low guid for seelcted guid type
-        uint32 m_hiCharGuid;
-        uint32 m_hiCreatureGuid;
-        uint32 m_hiItemGuid;
-        uint32 m_hiGoGuid;
-        uint32 m_hiCorpseGuid;
+        // first free low guid for selected guid type
+        ObjectGuidGenerator<HIGHGUID_PLAYER>     m_CharGuids;
+        ObjectGuidGenerator<HIGHGUID_UNIT>       m_CreatureGuids;
+        ObjectGuidGenerator<HIGHGUID_ITEM>       m_ItemGuids;
+        ObjectGuidGenerator<HIGHGUID_GAMEOBJECT> m_GameobjectGuids;
+        ObjectGuidGenerator<HIGHGUID_CORPSE>     m_CorpseGuids;
 
         QuestMap            mQuestTemplates;
 
         typedef UNORDERED_MAP<uint32, GossipText> GossipTextMap;
         typedef UNORDERED_MAP<uint32, uint32> QuestAreaTriggerMap;
-        typedef UNORDERED_MAP<uint32, std::string> ItemTextMap;
         typedef std::set<uint32> TavernAreaTriggerSet;
         typedef std::set<uint32> GameObjectForQuestSet;
 
-        GroupSet            mGroupSet;
+        GroupMap            mGroupMap;
         GuildMap            mGuildMap;
         ArenaTeamMap        mArenaTeamMap;
-
-        ItemTextMap         mItemTexts;
 
         QuestAreaTriggerMap mQuestAreaTriggerMap;
         TavernAreaTriggerSet mTavernAreaTriggerSet;

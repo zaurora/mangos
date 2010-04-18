@@ -367,7 +367,7 @@ enum Opcodes
     SMSG_ATTACKERSTATEUPDATE                        = 0x14A,
     SMSG_BATTLEFIELD_PORT_DENIED                    = 0x14B,
     SMSG_DAMAGE_DONE_OBSOLETE                       = 0x14C,
-    SMSG_DAMAGE_TAKEN_OBSOLETE                      = 0x14D,
+    SMSG_UNIT_SPELLCAST_START                       = 0x14D,
     SMSG_CANCEL_COMBAT                              = 0x14E,
     SMSG_SPELLBREAKLOG                              = 0x14F,
     SMSG_SPELLHEALLOG                               = 0x150,
@@ -470,7 +470,7 @@ enum Opcodes
     SMSG_TRAINER_LIST                               = 0x1B1,
     CMSG_TRAINER_BUY_SPELL                          = 0x1B2,
     SMSG_TRAINER_BUY_SUCCEEDED                      = 0x1B3,
-    SMSG_TRAINER_BUY_FAILED                         = 0x1B4,
+    SMSG_TRAINER_BUY_FAILED                         = 0x1B4, // uint64, uint32, uint32 (0...2)
     CMSG_BINDER_ACTIVATE                            = 0x1B5,
     SMSG_PLAYERBINDERROR                            = 0x1B6,
     CMSG_BANKER_ACTIVATE                            = 0x1B7,
@@ -576,7 +576,7 @@ enum Opcodes
     SMSG_GMTICKET_SYSTEMSTATUS                      = 0x21B,
     CMSG_SPIRIT_HEALER_ACTIVATE                     = 0x21C,
     CMSG_SET_STAT_CHEAT                             = 0x21D,
-    SMSG_SET_REST_START_OBSOLETE                    = 0x21E,
+    SMSG_QUEST_FORCE_REMOVE                         = 0x21E, // uint32 questid
     CMSG_SKILL_BUY_STEP                             = 0x21F,
     CMSG_SKILL_BUY_RANK                             = 0x220,
     CMSG_XP_CHEAT                                   = 0x221,
@@ -697,7 +697,7 @@ enum Opcodes
     CMSG_MEETINGSTONE_CHEAT                         = 0x294, // not found 3.3
     SMSG_MEETINGSTONE_SETQUEUE                      = 0x295, // string, showed in console
     CMSG_MEETINGSTONE_INFO                          = 0x296, // EVENT_LFG_UPDATE
-    SMSG_MEETINGSTONE_COMPLETE                      = 0x297, // EVENT_MAIL_SHOW
+    SMSG_MEETINGSTONE_COMPLETE                      = 0x297, // mail open from gossip?, EVENT_MAIL_SHOW
     SMSG_MEETINGSTONE_IN_PROGRESS                   = 0x298, // uint32, some UPDATE_COOLDOWN events
     SMSG_MEETINGSTONE_MEMBER_ADDED                  = 0x299, // uint32, errors: ERR_NOT_IN_GROUP (2,51) and ERR_NOT_IN_RAID (3,39,40)
     CMSG_GMTICKETSYSTEM_TOGGLE                      = 0x29A,
@@ -1241,8 +1241,8 @@ enum Opcodes
     CMSG_ITEM_REFUND                                = 0x4B4, // lua: ContainerRefundItemPurchase
     SMSG_ITEM_REFUND_RESULT                         = 0x4B5, // refund item result
     CMSG_CORPSE_MAP_POSITION_QUERY                  = 0x4B6, // CMSG, uint32
-    CMSG_CORPSE_MAP_POSITION_QUERY_RESPONSE         = 0x4B7, // SMSG, 3*float+float
-    CMSG_LFG_SET_ROLES_2                            = 0x4B8, // CMSG, empty, lua: SetLFGRoles
+    SMSG_CORPSE_MAP_POSITION_QUERY_RESPONSE         = 0x4B7, // SMSG, 3*float+float
+    UMSG_UNKNOWN_1208                               = 0x4B8, // not found
     UMSG_UNKNOWN_1209                               = 0x4B9, // not found
     CMSG_CALENDAR_CONTEXT_EVENT_SIGNUP              = 0x4BA, // CMSG, uint64, lua: CalendarContextEventSignUp
     SMSG_CALENDAR_ACTION_PENDING                    = 0x4BB, // SMSG, calendar related EVENT_CALENDAR_ACTION_PENDING
@@ -1264,13 +1264,13 @@ enum Opcodes
     UMSG_UNKNOWN_1227                               = 0x4CB, // not found 3.2
     UMSG_UNKNOWN_1228                               = 0x4CC, // not found 3.2
     SMSG_UNKNOWN_1229                               = 0x4CD, // SMSG, handles any opcode
-    SMSG_UNKNOWN_1230                               = 0x4CE, // SMSG, movement related
-    CMSG_UNKNOWN_1231_ACK                           = 0x4CF, // movement related
-    SMSG_UNKNOWN_1232                               = 0x4D0, // SMSG, movement related
-    CMSG_UNKNOWN_1233_ACK                           = 0x4D1, // movement related
-    SMSG_UNKNOWN_1234                               = 0x4D2, // SMSG, movement related
-    SMSG_UNKNOWN_1235                               = 0x4D3, // SMSG, movement related
-    SMSG_UNKNOWN_1236                               = 0x4D4, // SMSG, movement related
+    SMSG_FORCE_UNK1_SPEED_CHANGE                    = 0x4CE, // SMSG, movement related
+    CMSG_FORCE_UNK1_SPEED_CHANGE_ACK                = 0x4CF, // movement related
+    SMSG_FORCE_UNK2_SPEED_CHANGE                    = 0x4D0, // SMSG, movement related
+    CMSG_FORCE_UNK2_SPEED_CHANGE_ACK                = 0x4D1, // movement related
+    MSG_MOVE_UNKNOWN_1234                           = 0x4D2, // SMSG, movement related
+    SMSG_SPLINE_MOVE_UNKNOWN_1235                   = 0x4D3, // SMSG, movement related
+    SMSG_SPLINE_MOVE_UNKNOWN_1236                   = 0x4D4, // SMSG, movement related
     CMSG_EQUIPMENT_SET_USE                          = 0x4D5, // CMSG, lua: UseEquipmentSet
     SMSG_EQUIPMENT_SET_USE_RESULT                   = 0x4D6, // SMSG, UseEquipmentSetResult?
     UMSG_UNKNOWN_1239                               = 0x4D7, // not found 3.2
@@ -1315,13 +1315,33 @@ enum Opcodes
     UMSG_UNKNOWN_1278                               = 0x4FE, // not found 10596
     CMSG_READY_FOR_ACCOUNT_DATA_TIMES               = 0x4FF, // lua: ReadyForAccountDataTimes
     CMSG_QUERY_QUESTS_COMPLETED                     = 0x500, // lua: QueryQuestsCompleted
-    SMSG_QUERY_QUESTS_COMPLETED_RESPONSE            = 0x501, // response to 0x500
+    SMSG_QUERY_QUESTS_COMPLETED_RESPONSE            = 0x501, // response to CMSG_QUERY_QUESTS_COMPLETED
     CMSG_GM_REPORT_LAG                              = 0x502, // lua: GMReportLag
-    UMSG_UNKNOWN_1283                               = 0x503,
-    UMSG_UNKNOWN_1284                               = 0x504,
-    UMSG_UNKNOWN_1285                               = 0x505,
-    UMSG_UNKNOWN_1286                               = 0x506,
-    NUM_MSG_TYPES                                   = 0x507
+    UMSG_UNKNOWN_1283                               = 0x503, // not found
+    UMSG_UNKNOWN_1284                               = 0x504, // not found
+    UMSG_UNKNOWN_1285                               = 0x505, // not found
+    SMSG_UNKNOWN_1286                               = 0x506, // ERR_CORPSE_IS_NOT_IN_INSTANCE = 0x1A8,
+    UMSG_UNKNOWN_1287                               = 0x507, // not found
+    CMSG_UNKNOWN_1288                               = 0x508, // lua: SetAllowLowLevelRaid
+    CMSG_UNKNOWN_1289                               = 0x509, // lua: SetAllowLowLevelRaid
+    SMSG_CAMERA_SHAKE                               = 0x50A, // uint32 SpellEffectCameraShakes.dbc index, uint32
+    SMSG_UNKNOWN_1291                               = 0x50B, // some item update packet?
+    UMSG_UNKNOWN_1292                               = 0x50C, // not found
+    SMSG_REDIRECT_CLIENT                            = 0x50D, // uint32 ip, uint16 port, uint32 unk, uint8[20] hash
+    CMSG_UNKNOWN_1294                               = 0x50E, // something with networking
+    SMSG_UNKNOWN_1295                               = 0x50F, //
+    CMSG_UNKNOWN_1296                               = 0x510, // something with networking
+    SMSG_UNKNOWN_1297                               = 0x511, //
+    CMSG_UNKNOWN_1298                               = 0x512, // something with networking
+    UMSG_UNKNOWN_1299                               = 0x513, // not found
+    SMSG_COMBAT_LOG_MULTIPLE                        = 0x514, // SMSG, multi combatlog
+    SMSG_LFG_OPEN_FROM_GOSSIP                       = 0x515, // event EVENT_LFG_OPEN_FROM_GOSSIP (opens dungeon finder, probably for outdoor bosses)
+    SMSG_UNKNOWN_1302                               = 0x516, // something with player movement (move event 58?)
+    CMSG_UNKNOWN_1303                               = 0x517, // something with player movement (move event 58?)
+    SMSG_UNKNOWN_1304                               = 0x518, // something with player movement (move event 58?), speed packet
+    UMSG_UNKNOWN_1305                               = 0x519, // not found
+    UMSG_UNKNOWN_1306                               = 0x51A, // not found
+    NUM_MSG_TYPES                                   = 0x51B
 };
 
 /// Player state
