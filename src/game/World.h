@@ -77,7 +77,8 @@ enum WorldTimers
     WUPDATE_UPTIME      = 4,
     WUPDATE_CORPSES     = 5,
     WUPDATE_EVENTS      = 6,
-    WUPDATE_COUNT       = 7
+    WUPDATE_DELETECHARS = 7,
+    WUPDATE_COUNT       = 8
 };
 
 /// Configuration elements
@@ -177,6 +178,9 @@ enum eConfigUInt32Values
     CONFIG_UINT32_TIMERBAR_FIRE_GMLEVEL,
     CONFIG_UINT32_TIMERBAR_FIRE_MAX,
     CONFIG_UINT32_MIN_LEVEL_STAT_SAVE,
+    CONFIG_UINT32_CHARDELETE_KEEP_DAYS,
+    CONFIG_UINT32_CHARDELETE_METHOD,
+    CONFIG_UINT32_CHARDELETE_MIN_LEVEL,
     CONFIG_UINT32_VALUE_COUNT
 };
 
@@ -307,6 +311,7 @@ enum eConfigBoolValues
     CONFIG_BOOL_ARENA_QUEUE_ANNOUNCER_EXIT,
     CONFIG_BOOL_KICK_PLAYER_ON_BAD_PACKET,
     CONFIG_BOOL_STATS_SAVE_ONLY_ON_LOGOUT,
+    CONFIG_BOOL_CLEAN_CHARACTER_DB,
     CONFIG_BOOL_VALUE_COUNT
 };
 
@@ -381,7 +386,11 @@ enum RealmZone
 };
 
 // DB scripting commands
-#define SCRIPT_COMMAND_TALK                  0              // source = unit, target=any, datalong ( 0=say, 1=whisper, 2=yell, 3=emote text)
+#define SCRIPT_COMMAND_TALK                  0              // source = WorldObject, target = any/none, datalong (see enum ChatType for supported CHAT_TYPE_'s)
+                                                            // datalong2 = creature entry (searching for a buddy, closest to source), datalong3 = creature search radius
+                                                            // data_flags = flag_target_player_as_source    = 0x01
+                                                            //              flag_original_source_as_target  = 0x02
+                                                            //              flag_buddy_as_target            = 0x04
 #define SCRIPT_COMMAND_EMOTE                 1              // source = unit, datalong = anim_id
 #define SCRIPT_COMMAND_FIELD_SET             2              // source = any, datalong = field_id, datalog2 = value
 #define SCRIPT_COMMAND_MOVE_TO               3              // source = Creature, datalog2 = time, x/y/z

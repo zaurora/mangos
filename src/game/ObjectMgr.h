@@ -27,7 +27,6 @@
 #include "GameObject.h"
 #include "Corpse.h"
 #include "QuestDef.h"
-#include "Path.h"
 #include "ItemPrototype.h"
 #include "NPCHandler.h"
 #include "Database/DatabaseEnv.h"
@@ -54,8 +53,6 @@ extern SQLStorage sInstanceTemplate;
 class Group;
 class Guild;
 class ArenaTeam;
-class Path;
-class TransportPath;
 class Item;
 
 struct GameTele
@@ -78,6 +75,9 @@ struct ScriptInfo
     uint32 command;
     uint32 datalong;
     uint32 datalong2;
+    uint32 datalong3;
+    uint32 datalong4;
+    uint32 data_flags;
     int32  dataint;
     float x;
     float y;
@@ -93,6 +93,7 @@ extern ScriptMapMap sSpellScripts;
 extern ScriptMapMap sGameObjectScripts;
 extern ScriptMapMap sEventScripts;
 extern ScriptMapMap sGossipScripts;
+extern ScriptMapMap sCreatureMovementScripts;
 
 struct SpellClickInfo
 {
@@ -315,9 +316,10 @@ enum ConditionType
     CONDITION_LEVEL                 = 15,                   // player_level 0, 1 or 2 (0: equal to, 1: equal or higher than, 2: equal or less than)
     CONDITION_NOITEM                = 16,                   // item_id      count
     CONDITION_SPELL                 = 17,                   // spell_id     0, 1 (0: has spell, 1: hasn't spell)
+    CONDITION_INSTANCE_SCRIPT       = 18,                   // map_id       instance_condition_id (instance script specific enum)
 };
 
-#define MAX_CONDITION                 18                    // maximum value in ConditionType enum
+#define MAX_CONDITION                 19                    // maximum value in ConditionType enum
 
 struct PlayerCondition
 {
@@ -498,8 +500,6 @@ class ObjectMgr
         uint32 GetNearestTaxiNode( float x, float y, float z, uint32 mapid, uint32 team );
         void GetTaxiPath( uint32 source, uint32 destination, uint32 &path, uint32 &cost);
         uint32 GetTaxiMountDisplayId( uint32 id, uint32 team, bool allowed_alt_team = false);
-        void GetTaxiPathNodes( uint32 path, Path &pathnodes, std::vector<uint32>& mapIds );
-        void GetTransportPathNodes( uint32 path, TransportPath &pathnodes );
 
         Quest const* GetQuestTemplate(uint32 quest_id) const
         {
@@ -596,6 +596,7 @@ class ObjectMgr
         void LoadEventScripts();
         void LoadSpellScripts();
         void LoadGossipScripts();
+        void LoadCreatureMovementScripts();
 
         bool LoadMangosStrings(DatabaseType& db, char const* table, int32 min_value, int32 max_value);
         bool LoadMangosStrings() { return LoadMangosStrings(WorldDatabase,"mangos_string",MIN_MANGOS_STRING_ID,MAX_MANGOS_STRING_ID); }
@@ -960,7 +961,7 @@ class ObjectMgr
 
     private:
         void LoadScripts(ScriptMapMap& scripts, char const* tablename);
-        void CheckScripts(ScriptMapMap const& scripts,std::set<int32>& ids);
+        void CheckScriptTexts(ScriptMapMap const& scripts,std::set<int32>& ids);
         void LoadCreatureAddons(SQLStorage& creatureaddons, char const* entryName, char const* comment);
         void ConvertCreatureAddonAuras(CreatureDataAddon* addon, char const* table, char const* guidEntryStr);
         void LoadQuestRelationsHelper(QuestRelations& map,char const* table);

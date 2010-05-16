@@ -59,14 +59,16 @@ TrainerSpell const* TrainerSpellData::Find(uint32 spell_id) const
 bool VendorItemData::RemoveItem( uint32 item_id )
 {
     bool found = false;
-    for(VendorItemList::iterator i = m_items.begin(); i != m_items.end(); ++i )
+    for(VendorItemList::iterator i = m_items.begin(); i != m_items.end(); )
     {
         // can have many examples
         if((*i)->item == item_id)
         {
-            m_items.erase(i);
+            i = m_items.erase(i);
             found = true;
         }
+        else
+            ++i;
     }
 
     return found;
@@ -588,7 +590,7 @@ bool Creature::AIM_Initialize()
     // make sure nothing can change the AI during AI update
     if(m_AI_locked)
     {
-        sLog.outDebug("AIM_Initialize: failed to init, locked.");
+        DEBUG_LOG("AIM_Initialize: failed to init, locked.");
         return false;
     }
 
@@ -1181,7 +1183,7 @@ void Creature::DeleteFromDB()
 {
     if (!m_DBTableGuid)
     {
-        sLog.outDebug("Trying to delete not saved creature!");
+        DEBUG_LOG("Trying to delete not saved creature!");
         return;
     }
 
@@ -1524,7 +1526,7 @@ void Creature::SendAIReaction(AiReaction reactionType)
 
     ((WorldObject*)this)->SendMessageToSet(&data, true);
 
-    sLog.outDebug("WORLD: Sent SMSG_AI_REACTION, type %u.", reactionType);
+    DEBUG_LOG("WORLD: Sent SMSG_AI_REACTION, type %u.", reactionType);
 }
 
 void Creature::CallAssistance()
@@ -1738,7 +1740,7 @@ bool Creature::LoadCreaturesAddon(bool reload)
 
             Aura* AdditionalAura = CreateAura(AdditionalSpellInfo, cAura->effect_idx, NULL, this, this, 0);
             AddAura(AdditionalAura);
-            sLog.outDebug("Spell: %u with Aura %u added to creature (GUIDLow: %u Entry: %u )", cAura->spell_id, AdditionalSpellInfo->EffectApplyAuraName[EFFECT_INDEX_0],GetGUIDLow(),GetEntry());
+            DEBUG_LOG("Spell: %u with Aura %u added to creature (GUIDLow: %u Entry: %u )", cAura->spell_id, AdditionalSpellInfo->EffectApplyAuraName[EFFECT_INDEX_0],GetGUIDLow(),GetEntry());
         }
     }
     return true;
@@ -1789,6 +1791,45 @@ void Creature::SetInCombatWithZone()
             }
         }
     }
+}
+
+Unit* Creature::SelectAttackingTarget(AttackingTarget target, uint32 position) const
+{
+    if (!CanHaveThreatList())
+        return NULL;
+
+    //ThreatList m_threatlist;
+    ThreatList const& threatlist = getThreatManager().getThreatList();
+    ThreatList::const_iterator i = threatlist.begin();
+    ThreatList::const_reverse_iterator r = threatlist.rbegin();
+
+    if (position >= threatlist.size() || !threatlist.size())
+        return NULL;
+
+    switch(target)
+    {
+        case ATTACKING_TARGET_RANDOM:
+        {
+            advance(i, position + (rand() % (threatlist.size() - position)));
+            return Unit::GetUnit(*this, (*i)->getUnitGuid());
+        }
+        case ATTACKING_TARGET_TOPAGGRO:
+        {
+            advance(i, position);
+            return Unit::GetUnit(*this, (*i)->getUnitGuid());
+        }
+        case ATTACKING_TARGET_BOTTOMAGGRO:
+        {
+            advance(r, position);
+            return Unit::GetUnit(*this, (*r)->getUnitGuid());
+        }
+        // TODO: implement these
+        //case ATTACKING_TARGET_RANDOM_PLAYER:
+        //case ATTACKING_TARGET_TOPAGGRO_PLAYER:
+        //case ATTACKING_TARGET_BOTTOMAGGRO_PLAYER:
+    }
+
+    return NULL;
 }
 
 void Creature::_AddCreatureSpellCooldown(uint32 spell_id, time_t end_time)

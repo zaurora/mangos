@@ -19,7 +19,9 @@
 #ifndef MANGOS_DBCSTRUCTURE_H
 #define MANGOS_DBCSTRUCTURE_H
 
+#include "Common.h"
 #include "DBCEnums.h"
+#include "Path.h"
 #include "Platform/Define.h"
 
 #include <map>
@@ -335,7 +337,7 @@ struct AchievementCriteriaEntry
             uint32  rollValue;                              // 3
             uint32  count;                                  // 4
         } roll_need_on_loot;
-       // ACHIEVEMENT_CRITERIA_TYPE_ROLL_GREED_ON_LOOT      = 51
+        // ACHIEVEMENT_CRITERIA_TYPE_ROLL_GREED_ON_LOOT      = 51
         struct
         {
             uint32  rollValue;                              // 3
@@ -572,9 +574,9 @@ struct BattlemasterListEntry
     char*   name[16];                                       // 11-26
     //uint32 nameFlags                                      // 27 string flag, unused
     uint32 maxGroupSize;                                    // 28 maxGroupSize, used for checking if queue as group
-    //uint32 HolidayWorldStateId;                           // 29 new 3.1
-    //uint32 MinLevel;                                      // 30
-    //uint32 SomeLevel;                                     // 31, may be max level
+    uint32 HolidayWorldStateId;                             // 29 new 3.1
+    uint32 minLevel;                                        // 30, min level (sync with PvPDifficulty.dbc content)
+    uint32 maxLevel;                                        // 31, max level (sync with PvPDifficulty.dbc content)
 };
 
 /*struct Cfg_CategoriesEntry
@@ -601,12 +603,12 @@ struct CharStartOutfitEntry
 {
     //uint32 Id;                                            // 0
     uint32 RaceClassGender;                                 // 1 (UNIT_FIELD_BYTES_0 & 0x00FFFFFF) comparable (0 byte = race, 1 byte = class, 2 byte = gender)
-    int32 ItemId[MAX_OUTFIT_ITEMS];                         // 2-13
-    //int32 ItemDisplayId[MAX_OUTFIT_ITEMS];                // 14-25 not required at server side
-    //int32 ItemInventorySlot[MAX_OUTFIT_ITEMS];            // 26-37 not required at server side
-    //uint32 Unknown1;                                      // 38, unique values (index-like with gaps ordered in other way as ids)
-    //uint32 Unknown2;                                      // 39
-    //uint32 Unknown3;                                      // 40
+    int32 ItemId[MAX_OUTFIT_ITEMS];                         // 2-25
+    //int32 ItemDisplayId[MAX_OUTFIT_ITEMS];                // 26-29 not required at server side
+    //int32 ItemInventorySlot[MAX_OUTFIT_ITEMS];            // 50-73 not required at server side
+    //uint32 Unknown1;                                      // 74, unique values (index-like with gaps ordered in other way as ids)
+    //uint32 Unknown2;                                      // 75
+    //uint32 Unknown3;                                      // 76
 };
 
 struct CharTitlesEntry
@@ -635,9 +637,9 @@ struct ChrClassesEntry
     uint32  ClassID;                                        // 0
     //uint32 flags;                                         // 1, unused
     uint32  powerType;                                      // 2
-                                                            // 3-4, unused
-    //char*       name[16];                                 // 5-20 unused
-                                                            // 21 string flag, unused
+                                                            // 3, unused
+    char const* name[16];                                   // 4-19 unused
+                                                            // 20 string flag, unused
     //char*       nameFemale[16];                           // 21-36 unused, if different from base (male) case
                                                             // 37 string flag, unused
     //char*       nameNeutralGender[16];                    // 38-53 unused, if different from base (male) case
@@ -1356,6 +1358,10 @@ struct SoundEntriesEntry
                                                             // 29       new in 3.1
 };
 
+#define MAX_SPELL_REAGENTS 8
+#define MAX_SPELL_TOTEMS 2
+#define MAX_SPELL_TOTEM_CATEGORIES 2
+
 struct SpellEntry
 {
     uint32    Id;                                           // 0        m_ID
@@ -1408,9 +1414,9 @@ struct SpellEntry
     float     speed;                                        // 47       m_speed
     //uint32    modalNextSpell;                             // 48       m_modalNextSpell not used
     uint32    StackAmount;                                  // 49       m_cumulativeAura
-    uint32    Totem[2];                                     // 50-51    m_totem
-    int32     Reagent[8];                                   // 52-59    m_reagent
-    uint32    ReagentCount[8];                              // 60-67    m_reagentCount
+    uint32    Totem[MAX_SPELL_TOTEMS];                      // 50-51    m_totem
+    int32     Reagent[MAX_SPELL_REAGENTS];                  // 52-59    m_reagent
+    uint32    ReagentCount[MAX_SPELL_REAGENTS];             // 60-67    m_reagentCount
     int32     EquippedItemClass;                            // 68       m_equippedItemClass (value)
     int32     EquippedItemSubClassMask;                     // 69       m_equippedItemSubclass (mask)
     int32     EquippedItemInventoryTypeMask;                // 70       m_equippedItemInvTypes (mask)
@@ -1461,7 +1467,7 @@ struct SpellEntry
     //uint32    MinFactionId;                               // 219      m_minFactionID not used
     //uint32    MinReputation;                              // 220      m_minReputation not used
     //uint32    RequiredAuraVision;                         // 221      m_requiredAuraVision not used
-    uint32    TotemCategory[2];                             // 222-223  m_requiredTotemCategoryID
+    uint32    TotemCategory[MAX_SPELL_TOTEM_CATEGORIES];    // 222-223  m_requiredTotemCategoryID
     int32     AreaGroupId;                                  // 224      m_requiredAreaGroupId
     uint32    SchoolMask;                                   // 225      m_schoolMask
     uint32    runeCostID;                                   // 226      m_runeCostID
@@ -1469,7 +1475,7 @@ struct SpellEntry
     //uint32  PowerDisplayId;                               // 228 PowerDisplay.dbc, new in 3.1
     //float   unk_320_4[3];                                 // 229-231  3.2.0
     //uint32  spellDescriptionVariableID;                   // 232      3.2.0
-    //uint32  SpellDifficultyId;                            // 233      3.3.0
+    uint32  SpellDifficultyId;                              // 233      m_spellDifficultyID - id from SpellDifficulty.dbc
 
     // helpers
     int32 CalculateSimpleValue(SpellEffectIndex eff) const { return EffectBasePoints[eff] + int32(1); }
@@ -1544,6 +1550,12 @@ struct SpellShapeshiftEntry
     //uint32 unk3;                                          // 25 unused always 0
     //uint32 unk4;                                          // 26 unused always 0
     uint32 spellId[8];                                      // 27-34 spells which appear in the bar after shapeshifting
+};
+
+struct SpellDifficultyEntry
+{
+    uint32 ID;                                              // 0        m_ID
+    uint32 spellId[MAX_DIFFICULTY];                         // 1-4      m_spellId[4]
 };
 
 struct SpellDurationEntry
@@ -1662,8 +1674,8 @@ struct TaxiPathNodeEntry
     float     z;                                            // 6        m_LocZ
     uint32    actionFlag;                                   // 7        m_flags
     uint32    delay;                                        // 8        m_delay
-                                                            // 9        m_arrivalEventID
-                                                            // 10       m_departureEventID
+    uint32    arrivalEventID;                               // 9        m_arrivalEventID
+    uint32    departureEventID;                             // 10       m_departureEventID
 };
 
 struct TotemCategoryEntry
@@ -1840,19 +1852,17 @@ struct TaxiPathBySourceAndDestination
 typedef std::map<uint32,TaxiPathBySourceAndDestination> TaxiPathSetForSource;
 typedef std::map<uint32,TaxiPathSetForSource> TaxiPathSetBySource;
 
-struct TaxiPathNode
+struct TaxiPathNodePtr
 {
-    TaxiPathNode() : mapid(0), x(0),y(0),z(0),actionFlag(0),delay(0) {}
-    TaxiPathNode(uint32 _mapid, float _x, float _y, float _z, uint32 _actionFlag, uint32 _delay) : mapid(_mapid), x(_x),y(_y),z(_z),actionFlag(_actionFlag),delay(_delay) {}
+    TaxiPathNodePtr() : i_ptr(NULL) {}
+    TaxiPathNodePtr(TaxiPathNodeEntry const* ptr) : i_ptr(ptr) {}
 
-    uint32    mapid;
-    float     x;
-    float     y;
-    float     z;
-    uint32    actionFlag;
-    uint32    delay;
+    TaxiPathNodeEntry const* i_ptr;
+
+    operator TaxiPathNodeEntry const& () const { return *i_ptr; }
 };
-typedef std::vector<TaxiPathNode> TaxiPathNodeList;
+
+typedef Path<TaxiPathNodePtr,TaxiPathNodeEntry const> TaxiPathNodeList;
 typedef std::vector<TaxiPathNodeList> TaxiPathNodesByPath;
 
 #define TaxiMaskSize 12

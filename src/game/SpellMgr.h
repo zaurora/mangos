@@ -110,6 +110,8 @@ SpellSpecific GetSpellSpecific(uint32 spellId);
 // Different spell properties
 inline float GetSpellRadius(SpellRadiusEntry const *radius) { return (radius ? radius->Radius : 0); }
 uint32 GetSpellCastTime(SpellEntry const* spellInfo, Spell const* spell = NULL);
+uint32 GetSpellCastTimeForBonus( SpellEntry const *spellProto, DamageEffectType damagetype );
+float CalculateDefaultCoefficient(SpellEntry const *spellProto, DamageEffectType const damagetype);
 inline float GetSpellMinRange(SpellRangeEntry const *range, bool friendly = false)
 {
     if(!range)
@@ -134,6 +136,21 @@ inline bool IsSpellHaveEffect(SpellEntry const *spellInfo, SpellEffects effect)
         if(SpellEffects(spellInfo->Effect[i])==effect)
             return true;
     return false;
+}
+
+inline bool IsEffectHandledOnDelayedSpellLaunch(SpellEntry const *spellInfo, SpellEffectIndex effecIdx)
+{
+    switch (spellInfo->Effect[effecIdx])
+    {
+        case SPELL_EFFECT_SCHOOL_DAMAGE:
+        case SPELL_EFFECT_WEAPON_DAMAGE_NOSCHOOL:
+        case SPELL_EFFECT_WEAPON_PERCENT_DAMAGE:
+        case SPELL_EFFECT_WEAPON_DAMAGE:
+        case SPELL_EFFECT_NORMALIZED_WEAPON_DMG:
+            return true;
+        default:
+            return false;
+    }
 }
 
 inline bool IsSpellHaveAura(SpellEntry const *spellInfo, AuraType aura)
@@ -432,6 +449,8 @@ bool IsDiminishingReturnsGroupDurationLimited(DiminishingGroup group);
 DiminishingReturnsType GetDiminishingReturnsGroupType(DiminishingGroup group);
 int32 GetDiminishingReturnsLimitDuration(DiminishingGroup group, SpellEntry const* spellproto);
 
+SpellEntry const* GetSpellEntryByDifficulty(uint32 id, Difficulty difficulty);
+
 // Spell proc event related declarations (accessed using SpellMgr functions)
 enum ProcFlags
 {
@@ -722,7 +741,7 @@ inline bool IsProfessionOrRidingSkill(uint32 skill)
 
 class SpellMgr
 {
-    friend struct DoSpellBonusess;
+    friend struct DoSpellBonuses;
     friend struct DoSpellProcEvent;
     friend struct DoSpellProcItemEnchant;
 
@@ -1005,7 +1024,7 @@ class SpellMgr
         void LoadSpellElixirs();
         void LoadSpellProcEvents();
         void LoadSpellProcItemEnchant();
-        void LoadSpellBonusess();
+        void LoadSpellBonuses();
         void LoadSpellTargetPositions();
         void LoadSpellThreats();
         void LoadSkillLineAbilityMap();
