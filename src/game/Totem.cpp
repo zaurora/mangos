@@ -53,20 +53,8 @@ void Totem::Update( uint32 time )
 
 void Totem::Summon(Unit* owner)
 {
-    owner->GetMap()->Add((Creature*)this);
-
-    // select totem model in dependent from owner team
-    CreatureInfo const *cinfo = GetCreatureInfo();
-    if(owner->GetTypeId() == TYPEID_PLAYER && cinfo)
-    {
-        uint32 display_id = sObjectMgr.ChooseDisplayId(((Player*)owner)->GetTeam(), cinfo);
-        CreatureModelInfo const *minfo = sObjectMgr.GetCreatureModelRandomGender(display_id);
-        if (minfo)
-            display_id = minfo->modelid;
-        SetDisplayId(display_id);
-    }
-
     AIM_Initialize();
+    owner->GetMap()->Add((Creature*)this);
 
     if (owner->GetTypeId() == TYPEID_UNIT && ((Creature*)owner)->AI())
         ((Creature*)owner)->AI()->JustSummoned((Creature*)this);
@@ -121,15 +109,12 @@ void Totem::UnSummon()
     AddObjectToRemoveList();
 }
 
-void Totem::SetOwner(uint64 guid)
+void Totem::SetOwner(Unit* owner)
 {
-    SetCreatorGUID(guid);
-    SetOwnerGUID(guid);
-    if (Unit *owner = GetOwner())
-    {
-        setFaction(owner->getFaction());
-        SetLevel(owner->getLevel());
-    }
+    SetCreatorGUID(owner->GetGUID());
+    SetOwnerGUID(owner->GetGUID());
+    setFaction(owner->getFaction());
+    SetLevel(owner->getLevel());
 }
 
 Unit *Totem::GetOwner()

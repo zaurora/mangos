@@ -19,6 +19,7 @@
 #ifndef MANGOS_MAP_INSTANCED_H
 #define MANGOS_MAP_INSTANCED_H
 
+#include "Common.h"
 #include "Map.h"
 #include "InstanceSaveMgr.h"
 #include "DBCEnums.h"
@@ -37,7 +38,7 @@ class MANGOS_DLL_DECL MapInstanced : public Map
         void RemoveAllObjectsInRemoveList();
         void UnloadAll(bool pForce);
 
-        Map* CreateInstance(const uint32 mapId, Player * player);
+        Map* CreateInstance(Player* player);
         Map* FindMap(uint32 InstanceId) const { return _FindMap(InstanceId); }
         void DestroyInstance(uint32 InstanceId);
         void DestroyInstance(InstancedMaps::iterator &itr);
@@ -61,7 +62,7 @@ class MANGOS_DLL_DECL MapInstanced : public Map
 
     private:
 
-        InstanceMap* CreateInstance(uint32 InstanceId, InstanceSave *save, Difficulty difficulty);
+        InstanceMap* CreateInstanceMap(uint32 InstanceId, Difficulty difficulty, InstanceSave *save = NULL);
 
         InstancedMaps m_InstancedMaps;
 

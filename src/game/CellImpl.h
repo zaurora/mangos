@@ -19,6 +19,7 @@
 #ifndef MANGOS_CELLIMPL_H
 #define MANGOS_CELLIMPL_H
 
+#include "Common.h"
 #include "Cell.h"
 #include "Map.h"
 #include <cmath>
@@ -108,7 +109,7 @@ Cell::Visit(const CellPair &standing_cell, TypeContainerVisitor<T, CONTAINER> &v
         }
         default:
         {
-            ASSERT( false );
+            MANGOS_ASSERT( false );
             break;
         }
     }
@@ -141,7 +142,7 @@ inline CellArea Cell::CalculateCellArea(const WorldObject &obj, float radius)
 
     //we should increase search radius by object's radius, otherwise
     //we could have problems with huge creatures, which won't attack nearest players etc
-    radius += obj.GetObjectSize();
+    radius += obj.GetObjectBoundingRadius();
     //lets calculate object coord offsets from cell borders.
     //TODO: add more correct/generic method for this task
     const float x_offset = (obj.GetPositionX() - CENTER_GRID_CELL_OFFSET)/SIZE_OF_GRID_CELL;

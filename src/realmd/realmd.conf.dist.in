@@ -1,7 +1,9 @@
 ############################################
 # MaNGOS realmd configuration file         #
 ############################################
-ConfVersion=2007062001
+
+[RealmdConf]
+ConfVersion=2010062001
 
 ###################################################################################################################
 # REALMD SETTINGS
@@ -28,6 +30,9 @@ ConfVersion=2007062001
 #
 #    BindIP
 #         Bind Realm Server to IP/hostname
+#         This option is useful for running multiple worldd/realmd instances
+#         on different IP addresses using default ports.
+#         DO NOT CHANGE THIS UNLESS YOU _REALLY_ KNOW WHAT YOU'RE DOING
 #
 #    PidFile
 #        Realmd daemon PID file

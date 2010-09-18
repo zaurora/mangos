@@ -62,16 +62,15 @@ if (!(CONDITION)) \
 #define WPWarning(CONDITION) \
 if (!(CONDITION)) \
 { \
-    ACE_Stack_Trace st; \
     printf("%s:%i: Warning: Assertion in %s failed: %s",\
         __FILE__, __LINE__, __FUNCTION__, STRINGIZE(CONDITION)); \
 }
 #endif
 
 #ifdef MANGOS_DEBUG
-#  define ASSERT WPError
+#  define MANGOS_ASSERT WPError
 #else
-#  define ASSERT WPError // Error even if in release mode.
+#  define MANGOS_ASSERT WPError                             // Error even if in release mode.
 #endif
 
 #endif

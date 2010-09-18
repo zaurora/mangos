@@ -26,6 +26,8 @@
 #include "GameSystem/GridReference.h"
 #include "Timer.h"
 
+#include <cassert>
+
 class GridInfo
 {
     public:
@@ -96,20 +98,20 @@ class MANGOS_DLL_DECL NGrid
 
         const GridType& operator()(uint32 x, uint32 y) const
         {
-            ASSERT(x < N);
-            ASSERT(y < N);
+            assert(x < N);
+            assert(y < N);
             return i_cells[x][y];
         }
 
         GridType& operator()(uint32 x, uint32 y)
         {
-            ASSERT(x < N);
-            ASSERT(y < N);
+            assert(x < N);
+            assert(y < N);
             return i_cells[x][y];
         }
 
         const uint32& GetGridId() const { return i_gridId; }
-        void SetGridId(const uint32 id) const { i_gridId = id; }
+        void SetGridId(const uint32 id) { i_gridId = id; }
         grid_state_t GetGridState() const { return i_cellstate; }
         void SetGridState(grid_state_t s) { i_cellstate = s; }
         uint32 getX() const { return i_x; }
@@ -185,8 +187,8 @@ class MANGOS_DLL_DECL NGrid
 
         GridType& getGridType(const uint32& x, const uint32& y)
         {
-            ASSERT(x < N);
-            ASSERT(y < N);
+            assert(x < N);
+            assert(y < N);
             return i_cells[x][y];
         }
 

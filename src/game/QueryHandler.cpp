@@ -89,7 +89,7 @@ void WorldSession::SendNameQueryOpcodeFromDBCallBack(QueryResult *result, uint32
     }
 
     Field *fields = result->Fetch();
-    uint32 guid      = fields[0].GetUInt32();
+    uint32 lowguid      = fields[0].GetUInt32();
     std::string name = fields[1].GetCppString();
     uint8 pRace = 0, pGender = 0, pClass = 0;
     if(name == "")
@@ -102,7 +102,7 @@ void WorldSession::SendNameQueryOpcodeFromDBCallBack(QueryResult *result, uint32
     }
                                                             // guess size
     WorldPacket data( SMSG_NAME_QUERY_RESPONSE, (8+1+1+1+1+1+1+10) );
-    data.appendPackGUID(MAKE_NEW_GUID(guid, 0, HIGHGUID_PLAYER));
+    data << ObjectGuid(HIGHGUID_PLAYER, lowguid).WriteAsPacked();
     data << uint8(0);                                       // added in 3.1; if > 1, then end of packet
     data << name;
     data << uint8(0);                                       // realm name for cross realm BG usage
@@ -184,12 +184,12 @@ void WorldSession::HandleCreatureQueryOpcode( WorldPacket & recv_data )
         data << uint32(ci->rank);                           // Creature Rank (elite, boss, etc)
         data << uint32(ci->KillCredit[0]);                  // new in 3.1, kill credit
         data << uint32(ci->KillCredit[1]);                  // new in 3.1, kill credit
-        data << uint32(ci->DisplayID_A[0]);                 // modelid_male1
-        data << uint32(ci->DisplayID_H[0]);                 // modelid_female1 ?
-        data << uint32(ci->DisplayID_A[1]);                 // modelid_male2 ?
-        data << uint32(ci->DisplayID_H[1]);                 // modelid_femmale2 ?
-        data << float(ci->unk16);                           // unk
-        data << float(ci->unk17);                           // unk
+
+        for(int i = 0; i < MAX_CREATURE_MODEL; ++i)
+            data << uint32(ci->ModelId[i]);
+
+        data << float(ci->unk16);                           // health modifier
+        data << float(ci->unk17);                           // power modifier
         data << uint8(ci->RacialLeader);
         for(uint32 i = 0; i < 6; ++i)
             data << uint32(ci->questItems[i]);              // itemId[6], quest drop
@@ -451,7 +451,7 @@ void WorldSession::HandlePageTextQueryOpcode( WorldPacket & recv_data )
     }
 }
 
-void WorldSession::HandleCorpseMapPositionQuery( WorldPacket & recv_data )
+void WorldSession::HandleCorpseMapPositionQueryOpcode( WorldPacket & recv_data )
 {
     DEBUG_LOG( "WORLD: Recv CMSG_CORPSE_MAP_POSITION_QUERY" );
 
@@ -466,7 +466,7 @@ void WorldSession::HandleCorpseMapPositionQuery( WorldPacket & recv_data )
     SendPacket(&data);
 }
 
-void WorldSession::HandleQueryQuestsCompleted( WorldPacket & /*recv_data */)
+void WorldSession::HandleQueryQuestsCompletedOpcode( WorldPacket & /*recv_data */)
 {
     uint32 count = 0;
 
@@ -485,7 +485,7 @@ void WorldSession::HandleQueryQuestsCompleted( WorldPacket & /*recv_data */)
     SendPacket(&data);
 }
 
-void WorldSession::HandleQuestPOIQuery(WorldPacket& recv_data)
+void WorldSession::HandleQuestPOIQueryOpcode(WorldPacket& recv_data)
 {
     uint32 count;
     recv_data >> count;                                     // quest count, max=25

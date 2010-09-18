@@ -1,7 +1,9 @@
 #####################################
 # MaNGOS Configuration file         #
 #####################################
-ConfVersion=2010051901
+
+[MangosdConf]
+ConfVersion=2010062001
 
 ###################################################################################################################
 # CONNECTIONS AND DIRECTORIES
@@ -43,6 +45,9 @@ ConfVersion=2010051901
 #
 #    BindIP
 #        Bind World Server to IP/hostname
+#        This option is useful for running multiple worldd/realmd instances
+#        on different IP addresses using default ports.
+#        DO NOT CHANGE THIS UNLESS YOU _REALLY_ KNOW WHAT YOU'RE DOING
 #
 ###################################################################################################################
 
@@ -142,6 +147,13 @@ BindIP = "0.0.0.0"
 #        These spells are ignored for LoS calculation
 #        List of ids with delimiter ','
 #
+#    vmap.enableIndoorCheck
+#        Enable/Disable VMap based indoor check to remove outdoor-only auras (mounts etc.).
+#        Requires VMaps enabled to work.
+#        Default: 1 (Enabled)
+#                 0 (Disabled)
+#
+#
 #    DetectPosCollision
 #        Check final move position, summon position, etc for visible collision with other objects or
 #        wall (wall only if vmaps are enabled)
@@ -192,8 +204,9 @@ PlayerSave.Stats.MinLevel = 0
 PlayerSave.Stats.SaveOnlyOnLogout = 1
 vmap.enableLOS = 0
 vmap.enableHeight = 0
-vmap.ignoreMapIds = "369"
+vmap.ignoreMapIds = ""
 vmap.ignoreSpellIds = "7720"
+vmap.enableIndoorCheck = 1
 DetectPosCollision = 1
 TargetPosRecalculateRange = 1.5
 UpdateUptimeInterval = 10
@@ -599,6 +612,11 @@ LogColors = ""
 #        Hour in one from weekly days when weekly quests reset (0..23)
 #        Default: 6
 #
+#    Quests.IgnoreRaid
+#        Non-raid quests allowed in raids
+#        Default: 0 (not allowed)
+#                 1 (allowed)
+#
 #    Guild.EventLogRecordsCount
 #        Count of guild event log records stored in guild_eventlog table
 #        Increase to store more guild events in table, minimum is 100
@@ -735,6 +753,7 @@ Quests.HighLevelHideDiff = 7
 Quests.Daily.ResetHour = 6
 Quests.Weekly.ResetWeekDay = 3
 Quests.Weekly.ResetHour = 6
+Quests.IgnoreRaid = 0
 Guild.EventLogRecordsCount = 100
 Guild.BankEventLogRecordsCount = 25
 TimerBar.Fatigue.GMLevel = 4
@@ -850,12 +869,12 @@ TalentsInspecting = 1
 #    Corpse.Decay.ELITE
 #    Corpse.Decay.RAREELITE
 #    Corpse.Decay.WORLDBOSS
-#        Seconds until creature corpse will decay without being looted or skinned.
-#        Default: 60, 300, 300, 300, 3600
+#        Seconds until creature corpse will decay without being looted or skinned (not used when creature does not have loot initially)
+#        Default: 300, 900, 600, 1200, 3600
 #
 #    Rate.Corpse.Decay.Looted
 #         Controls how long the creature corpse stays after it had been looted, as a multiplier of its Corpse.Decay.* config.
-#         Default: 0.1
+#         Default: 0.0 (will use modifier /3 of the creatures spawntimesecs when 0.0)
 #
 #    Rate.Creature.Normal.Damage
 #    Rate.Creature.Elite.Elite.Damage
@@ -903,12 +922,12 @@ CreatureFamilyAssistanceDelay = 1500
 CreatureFamilyFleeDelay = 7000
 WorldBossLevelDiff = 3
 Corpse.EmptyLootShow = 1
-Corpse.Decay.NORMAL = 60
-Corpse.Decay.RARE = 300
-Corpse.Decay.ELITE = 300
-Corpse.Decay.RAREELITE = 300
+Corpse.Decay.NORMAL = 300
+Corpse.Decay.RARE = 900
+Corpse.Decay.ELITE = 600
+Corpse.Decay.RAREELITE = 1200
 Corpse.Decay.WORLDBOSS = 3600
-Rate.Corpse.Decay.Looted = 0.1
+Rate.Corpse.Decay.Looted = 0.0
 Rate.Creature.Normal.Damage = 1
 Rate.Creature.Elite.Elite.Damage = 1
 Rate.Creature.Elite.RAREELITE.Damage = 1
@@ -1093,7 +1112,7 @@ GM.AllowAchievementGain  = 1
 #    Visibility.Distance.Grey.Unit
 #        Visibility grey distance for creatures/players (fast changing objects)
 #        addition to appropriate object type Visibility.Distance.* use in case visibility removing to
-#        object (except corpse around distences) If � is distance and G is grey distance then object
+#        object (except corpse around distances) If D is distance and G is grey distance then object
 #        make visible if distance to it <= D but make non visible if distance > D+G
 #        Default: 1 (yard)
 #
@@ -1123,6 +1142,7 @@ Visibility.Distance.Grey.Object = 10
 #    Rate.RunicPower.Income
 #    Rate.RunicPower.Loss
 #    Rate.Focus
+#    Rate.Energy (Rogue)
 #        Health and power regeneration and rage income from damage.
 #        Default: 1
 #
@@ -1160,6 +1180,10 @@ Visibility.Distance.Grey.Object = 10
 #    Rate.Auction.Deposit
 #    Rate.Auction.Cut
 #        Auction rates (auction time, deposit get at auction start, auction cut from price at auction end)
+#
+#    Auction.Deposit.Min
+#        Minimum auction deposit size in copper
+#        Default: 100 (1 silver)
 #
 #    Rate.Honor
 #        Honor gain rate
@@ -1252,6 +1276,7 @@ Rate.Rage.Loss = 1
 Rate.RunicPower.Income = 1
 Rate.RunicPower.Loss = 1
 Rate.Focus = 1
+Rate.Energy = 1
 Rate.Skill.Discovery = 1
 Rate.Drop.Item.Poor = 1
 Rate.Drop.Item.Normal = 1
@@ -1272,6 +1297,7 @@ Rate.Damage.Fall = 1
 Rate.Auction.Time = 1
 Rate.Auction.Deposit = 1
 Rate.Auction.Cut = 1
+Auction.Deposit.Min = 100
 Rate.Honor = 1
 Rate.Mining.Amount = 1
 Rate.Mining.Next   = 1
@@ -1387,6 +1413,14 @@ BattleGround.PremadeGroupWaitForMatch = 1800000
 #        Default: 1 (active)
 #                 0 (finished)
 #
+#    Arena.StartRating
+#        Default Rating at team creation
+#        Default: -1 (use season dependent default value)
+#
+#    Arena.StartPersonalRating
+#        Default Personal Rating at team creation
+#        Default: -1 (use season dependent default value)
+#
 ###################################################################################################################
 
 Arena.MaxRatingDifference = 150
@@ -1397,6 +1431,8 @@ Arena.QueueAnnouncer.Join = 0
 Arena.QueueAnnouncer.Exit = 0
 Arena.ArenaSeason.ID = 1
 Arena.ArenaSeason.InProgress = 1
+Arena.StartRating = -1
+Arena.StartPersonalRating = -1
 
 ###################################################################################################################
 # NETWORK CONFIG

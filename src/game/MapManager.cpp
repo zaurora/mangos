@@ -110,17 +110,18 @@ MapManager::_createBaseMap(uint32 id)
         i_maps[id] = m;
     }
 
-    ASSERT(m != NULL);
+    MANGOS_ASSERT(m != NULL);
     return m;
 }
 
 Map* MapManager::CreateMap(uint32 id, const WorldObject* obj)
 {
-    ASSERT(obj);
+    MANGOS_ASSERT(obj);
     //if(!obj->IsInWorld()) sLog.outError("GetMap: called for map %d with object (typeid %d, guid %d, mapid %d, instanceid %d) who is not in world!", id, obj->GetTypeId(), obj->GetGUIDLow(), obj->GetMapId(), obj->GetInstanceId());
     Map *m = _createBaseMap(id);
 
-    if (m && (obj->GetTypeId() == TYPEID_PLAYER) && m->Instanceable()) m = ((MapInstanced*)m)->CreateInstance(id, (Player*)obj);
+    if (m && (obj->GetTypeId() == TYPEID_PLAYER) && m->Instanceable())
+        m = ((MapInstanced*)m)->CreateInstance((Player*)obj);
 
     return m;
 }
@@ -249,7 +250,7 @@ MapManager::Update(uint32 diff)
         iter->second->Update((uint32)i_timer.GetCurrent());
 
     for (TransportSet::iterator iter = m_Transports.begin(); iter != m_Transports.end(); ++iter)
-        (*iter)->Update(i_timer.GetCurrent());
+        (*iter)->Update((uint32)i_timer.GetCurrent());
 
     i_timer.SetCurrent(0);
 }

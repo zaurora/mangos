@@ -19,6 +19,7 @@
 #ifndef MANGOSSERVER_CORPSE_H
 #define MANGOSSERVER_CORPSE_H
 
+#include "Common.h"
 #include "Object.h"
 #include "Database/DatabaseEnv.h"
 #include "GridDefines.h"
@@ -89,8 +90,6 @@ class Corpse : public WorldObject
         void YellToZone(int32 textId, uint32 language, uint64 TargetGuid) { MonsterYellToZone(textId,language,TargetGuid); }
 
         GridReference<Corpse> &GetGridRef() { return m_gridRef; }
-
-        bool isActiveObject() const { return false; }
 
         bool IsExpired(time_t t) const;
     private:
